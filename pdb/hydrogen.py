@@ -12,6 +12,8 @@ from . import extract
 from algebra import plane
 
 
+# TODO Currently, this funtion computs CA-N-C angles, which is not its purpose,
+# This was just for testing. Should generate all explicit hydrogens of the backbone
 def backbone(ident, file):
 
     c_carboxyl = None
@@ -20,6 +22,7 @@ def backbone(ident, file):
 
         atoms = aa.get_unpacked_list()
 
+        # ensures that we use the c_carboxyl of the previous iteration
         if c_carboxyl is None:
             c_carboxyl = np.array(atoms[2].get_coord())
             continue
@@ -41,6 +44,13 @@ def backbone(ident, file):
 
 
 def _compute_hydrogen(aa, c_carboxyl):
+    """
+    Computes the explicit hydrogen (actually only the coordinates) of the amino acid residue `aa` and
+    the c_carboxyl of the previous amino acid.
+    :param aa: Coordinates of explicit hydrogen
+    :param c_carboxyl:  C Carboxyl Atom of the amino acid that precedes `aa` in the sequence
+    :return: Coordinates of the explicit Hydrogen of that amino acid
+    """
 
     atoms = aa.get_unpacked_list()
 
@@ -54,9 +64,6 @@ def _compute_hydrogen(aa, c_carboxyl):
                                   c_carboxyl,
                                   nitrogen)
 
-    #TODO This approach does not work yet. Should use the angle of 119 deg in CA-N-H
-    # System instead of bisector.
-
     # setup bisector plane of angle C_carboxyl - N - c_alpha
     plane2 = plane.Plane(nitrogen,
                          c_carboxyl - c_alpha)
@@ -65,7 +72,8 @@ def _compute_hydrogen(aa, c_carboxyl):
     line = plane1.intersect(plane2)
 
     # get candidates for positions of Hydrogen via solving an quadratic formula
-
+    # actually, all details of ths quadratic formula have been elaborated on my flipchart. Hope there is no error here
+    # TODO Check for errors, this is highly sensitive stuff here
     t = nitrogen - np.array(line.strut)
 
     b0 = line.direction[0]
@@ -74,7 +82,7 @@ def _compute_hydrogen(aa, c_carboxyl):
 
     p0 = np.power(b0, 2) + np.power(b1, 2) + np.power(b2, 2)
     p1 = -1 * (2 * t[0] * b0 + 2 * t[1] * b1 + 2 * t[2] * b2)
-    p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2) - 0.81
+    p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2) - 0.9409
 
     roots = np.roots((p0, p1, p2))
 
@@ -82,8 +90,8 @@ def _compute_hydrogen(aa, c_carboxyl):
     candidate1 = np.array(line.strut) + roots[0] * np.array(line.direction)
     candidate2 = np.array(line.strut) + roots[1] * np.array(line.direction)
 
-    # compute
+    # compute distances of candidates to o_carboxyl
     candidate1_dist = np.linalg.norm(candidate1 - o_carboxyl)
     candidate2_dist = np.linalg.norm(candidate2 - o_carboxyl)
 
-    return candidate1 if candidate1_dist < candidate2_dist else candidate2
+    return candidate2 if candidate2_dist > candidate1_dist else candidate1
