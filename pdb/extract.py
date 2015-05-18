@@ -21,3 +21,31 @@ def get_amino_acids(ident, file):
 
         if res.get_resname() in constants.AMINO_ACIDS:
             yield res
+
+
+def get_secondary_structure_annotation(file):
+    """
+    Reads a PDB-file and returns two lists of residue positions in normal
+    right handed helices and beta sheets. We need the residue positions and its
+    annotated structure for calculating torsion angles for only these amino
+    acids.
+    Unfortunately, the PDB-modul from BioPython does not support secondary
+    structure read out so far...
+    :param file: the path to the pdb-file
+    :return: a touple of two lists of residue positions in [0]: helices
+                                                           [1]: beta sheets
+    """
+    return -1, -1
+
+
+def get_backbone_torsion_angles(generator_aa):
+    """
+    Calculates the backbone torsion angles for annotated alpha-helices and
+    beta-sheets from a Generator with all amino acid residues from a PDB-file
+    :param generator_aa: Generator with extracted amino acid residues from the
+    PDB-file
+    :return: Two list of touples, containing the phi and psi torsion angles for
+    alpha-helices
+    """
+    current_residue = generator_aa.next()
+    return -1
