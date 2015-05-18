@@ -57,7 +57,7 @@ def get_secondary_structure_annotation(file):
     return record_helix_aa, record_sheet_aa
 
 
-def get_backbone_torsion_angles(generator_aa):
+def get_backbone_torsion_angles(generator_aa, pos_helix, pos_sheet):
     """
     Calculates the backbone torsion angles for annotated alpha-helices and
     beta-sheets from a Generator with all amino acid residues from a PDB-file
@@ -66,11 +66,17 @@ def get_backbone_torsion_angles(generator_aa):
     :return: Two lists of touples, containing the phi and psi torsion angles
     for alpha-helices and beta-sheets
     """
-    current_residue = generator_aa.next()
+    for item in generator_aa:
+        print item.atom()
     return -1
 
 
 if __name__ == "__main__":
     # test file
     pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
-    print get_secondary_structure_annotation(pdb_file)
+    residues = get_amino_acids("test", pdb_file)
+    # example: print the residues that are in helices
+    structure_positions = get_secondary_structure_annotation(pdb_file)
+    print structure_positions[0]
+    get_backbone_torsion_angles(residues, structure_positions[0],
+                                structure_positions[1])
