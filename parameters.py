@@ -1,4 +1,6 @@
-__author__ = 'lukas'
-
 NH_DISTANCE = 0.97
 NH_DISTANCE2 = 0.9409
+
+HNCA_ANGLE_DEG = 119
+
+DERIVATION_H = 1e-3

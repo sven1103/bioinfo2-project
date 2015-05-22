@@ -63,7 +63,10 @@ class Shell(object):
             r = self.radius
 
             # setup parts of the equation
-            a = n1 * x0 - p1 * n1 + n2 * y0 - p2 * n2 + n3 * z0 - p3 * n3
+            a = (n1 * x0) - (p1 * n1) \
+                + (n2 * y0) - (p2 * n2) \
+                + (n3 * z0) - (p3 * n3)
+
             b = n1 * r * np.cos(theta) * np.sin(phi)
             c = n2 * r * np.sin(theta) * np.sin(phi)
             d = n3 * r * np.cos(phi)

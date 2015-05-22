@@ -8,8 +8,9 @@ from __future__ import division
 
 from Bio.PDB import Atom
 import numpy as np
+from scipy.optimize import fmin_slsqp
 
-from util import window
+from util import window, angle
 from . import extract
 from algebra import Plane
 import parameters as para
@@ -47,11 +48,10 @@ def backbone(struc):
             continue
 
         # create atom object for hydrogen
-        atom = Atom.Atom('H', aa2_hydrogen,0,1,' ',' H  ',serial,'H')
+        atom = Atom.Atom('H', aa2_hydrogen, 0, 1, ' ', ' H  ', serial, 'H')
         serial += 1
 
         yield (atom, aa2.get_full_id())
-
 
 
 def _compute_hydrogen(aa1, aa2):
@@ -96,7 +96,8 @@ def _compute_hydrogen(aa1, aa2):
 
     p0 = np.power(b0, 2) + np.power(b1, 2) + np.power(b2, 2)
     p1 = (-1) * (2 * t[0] * b0 + 2 * t[1] * b1 + 2 * t[2] * b2)
-    p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2) - para.NH_DISTANCE2
+    p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2)\
+        - para.NH_DISTANCE2
 
     roots = np.roots((p0, p1, p2))
 
@@ -108,8 +109,43 @@ def _compute_hydrogen(aa1, aa2):
     candidate1_dist = np.linalg.norm(candidate1 - aa1_oxygen)
     candidate2_dist = np.linalg.norm(candidate2 - aa1_oxygen)
 
-    return candidate2 if candidate2_dist > candidate1_dist else candidate1
+    hydrogen = candidate2 if candidate2_dist > candidate1_dist else candidate1
 
+    #
+    # optimize hydrogen angle
+    #
+    # get coordinates of first plane
+    p1_coord = plane1.coordinates
+
+    # ensure that the hydrogen lies on the plane
+    def on_plane(x, y, z):
+        return p1_coord[0] * x + p1_coord[1] * y + p1_coord[2] * z\
+            - p1_coord[3]
+
+    # ensures the correct distance between nitrogen and hydrogen
+    def has_distance(x, y, z):
+        return np.linalg.norm(vec1(x, y, z)) - para.NH_DISTANCE
+
+    # consider vectors from nitrogen to hydrogen and vector
+    # from calpha to nitrogen
+    vec1 = lambda x, y, z: np.array((x, y, z)) - aa2_nitrogen
+    vec2 = aa2_calpha - aa2_nitrogen
+
+    # specify function that is to be minimized
+    def target(x, y, z):
+
+        return np.power(angle(vec1(x, y, z), vec2, deg=True)
+                        - para.HNCA_ANGLE_DEG, 2)
+
+    res = fmin_slsqp(lambda q: target(q[0], q[1], q[2]),
+                     x0=hydrogen,
+                     eqcons=[lambda q: on_plane(q[0], q[1], q[2]),
+                             lambda q: has_distance(q[0], q[1], q[2])],
+                     acc=1e-12,
+                     epsilon=1e-10,
+                     iprint=0,
+                     iter=1000)
+    return res
 
 def _validate(aa):
     """
@@ -121,5 +157,4 @@ def _validate(aa):
     """
 
     return len(aa.get_unpacked_list()) > 3
-
 

@@ -1,7 +1,6 @@
 """
 Provides utility functions that do not fit anywhere else
 """
-__author__ = 'lukas'
 from itertools import islice
 
 import numpy as np
