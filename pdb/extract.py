@@ -2,26 +2,34 @@
 Extract some required attributes from PDB files using
 the BioPython library.
 """
-from Bio import PDB
-from Bio import BiopythonWarning
 import math
-import constants
 import warnings
+
+from Bio import BiopythonWarning, PDB
+
+import constants
+
+
 # remove the ugly warning from the PDB module, that chains are discontinuous
 warnings.simplefilter("ignore", BiopythonWarning)
 
-def get_amino_acids(ident, file):
+
+def get_amino_acids(struc):
     """
     Gets all amino acids of specified PDB file
-    :param ident: Identifier as String used to identify the structure
-    :param file: Path or File handle to PDB file.
+    :param struc: Structure objects as returned by BioPythons PDB file parser
     :return: Generator of all Amino Acid residues of PDB file
     """
-    struct = PDB.PDBParser().get_structure(ident, file)
+    for residue in struc.get_residues():
+        if residue.get_resname() in constants.AMINO_ACIDS:
+            yield residue
 
-    for res in struct.get_residues():
-        if res.get_resname() in constants.AMINO_ACIDS:
-            yield res
+def get_atom_max_serial_number(struc):
+
+    # Get list of all atoms and map them to their serial numbers,
+    # then return max
+    return max(map(lambda atom: atom.get_serial_number(),
+                   struc.get_atoms()))
 
 
 def get_secondary_structure_annotation(file):
@@ -112,7 +120,8 @@ if __name__ == "__main__":
     # test file
     pdb_file = "/home/sven/Git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
     #pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
-    residues = get_amino_acids("test", pdb_file)
+    struct = PDB.PDBParser().get_structure("test", pdb_file)
+    residues = get_amino_acids(struct)
     # example: print the residues that are in helices
     structure_positions = get_secondary_structure_annotation(pdb_file)
     print structure_positions[0]

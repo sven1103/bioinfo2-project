@@ -2,96 +2,124 @@
 This file computes explicit hydrogen atoms in PDB files by taking several rules in account, which are
 described in [1].
 
-
 [1] E. Baker, R. Hubbard: Hydrogen bonding in globular proteins
 """
-__author__ = 'lukas'
+from __future__ import division
+
+from Bio.PDB import Atom
 import numpy as np
 
+from util import window
 from . import extract
-from algebra import plane
+from algebra import Plane
+import parameters as para
 
 
-# TODO Currently, this funtion computs CA-N-C angles, which is not its purpose,
-# This was just for testing. Should generate all explicit hydrogens of the backbone
-def backbone(ident, file):
+def backbone(struc):
+    """
+    Generates all explicit Hydrogens of Backbone of structure
+    object. Does not check whether these are already included in
+    the residues.
 
-    c_carboxyl = None
+    :param struc: Structure object as obtained by PDBParser.get_structure()
+    :return: 2-Tuple (Hydrogen, resid), where Hydrogen is an object of class
+    Atom that represents one computed hydrogen. resid is the ID of
+    the Entity object that contains the hydrogen.
+    """
 
-    for aa in extract.get_amino_acids(ident, file):
+    # get maximal serial number of PDB FIle
+    serial = extract.get_atom_max_serial_number(struc) + 1
 
-        atoms = aa.get_unpacked_list()
+    # uses a sliding window approach to generate all consecutive
+    # tuples of amino acids
+    for (aa1, aa2) in window(extract.get_amino_acids(struc)):
 
-        # ensures that we use the c_carboxyl of the previous iteration
-        if c_carboxyl is None:
-            c_carboxyl = np.array(atoms[2].get_coord())
+        # hydrogens do not fulfill the requirements
+        if not (_validate(aa1) and _validate(aa2)):
             continue
 
-        # compute angle
-        n = np.array(atoms[0].get_coord())
-        c_a = np.array(atoms[1].get_coord())
-        h = np.array(_compute_hydrogen(aa, c_carboxyl))
+        # compute explicit hydrogen of backbone
+        aa2_hydrogen = _compute_hydrogen(aa1, aa2)
 
-        v1 = c_a - n
-        v2 = h - n
+        # if the hydrogen could not be computed, we continue
+        # to next iteration
+        if aa2_hydrogen is None:
+            continue
 
-        angle = np.arccos(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)))
+        # create atom object for hydrogen
+        atom = Atom.Atom('H', aa2_hydrogen,0,1,' ',' H  ',serial,'H')
+        serial += 1
 
-        yield (angle / (2 * np.pi)) * 360
-
-        # set new c_carboxyl
-        c_carboxyl = np.array(atoms[2].get_coord())
+        yield (atom, aa2.get_full_id())
 
 
-def _compute_hydrogen(aa, c_carboxyl):
+
+def _compute_hydrogen(aa1, aa2):
     """
-    Computes the explicit hydrogen (actually only the coordinates) of the amino acid residue `aa` and
-    the c_carboxyl of the previous amino acid.
-    :param aa: Coordinates of explicit hydrogen
-    :param c_carboxyl:  C Carboxyl Atom of the amino acid that precedes `aa` in the sequence
-    :return: Coordinates of the explicit Hydrogen of that amino acid
+    Computes the explicit hydrogen (actually only the coordinates) of
+    the amino acid residue `aa` and the c_carboxyl of the previous amino acid.
+    :param aa1: Amino acid one
+    :param aa2: Amino acid two
+    :return: Coordinates of the explicit Hydrogen of amino acid aa2
     """
+    # retrieve all atoms of considered amino acids
+    atoms1 = aa1.get_unpacked_list()
+    atoms2 = aa2.get_unpacked_list()
 
-    atoms = aa.get_unpacked_list()
+    # get coordinates of all relevant atoms
+    aa1_oxygen = np.array(atoms1[3].get_coord())
+    aa1_carbon = np.array(atoms1[2].get_coord())
+    aa2_nitrogen = np.array(atoms2[0].get_coord())
+    aa2_calpha = np.array(atoms2[1].get_coord())
 
-    # we need Backbone Nitrogen, CA, C, 0
-    nitrogen = np.array(atoms[0].get_coord())
-    c_alpha = np.array(atoms[1].get_coord())
-    o_carboxyl = np.array(atoms[3].get_coord())
+    # setup plane through aa1_oxygen, aa1_carbon, and aa2_nitrogen
+    plane1 = Plane.from_vec(aa1_oxygen, aa1_carbon, aa2_nitrogen)
 
-    # setup plane through nitrogen, c_carboxyl, and o_carboxyl
-    plane1 = plane.plane_from_vec(o_carboxyl,
-                                  c_carboxyl,
-                                  nitrogen)
-
-    # setup bisector plane of angle C_carboxyl - N - c_alpha
-    plane2 = plane.Plane(nitrogen,
-                         c_carboxyl - c_alpha)
+    # setup bisector plane
+    plane2 = Plane.Plane(aa2_nitrogen,
+                         aa2_calpha - aa1_carbon)
 
     # intersect planes to get line on which H lies
     line = plane1.intersect(plane2)
 
-    # get candidates for positions of Hydrogen via solving an quadratic formula
-    # actually, all details of ths quadratic formula have been elaborated on my flipchart. Hope there is no error here
-    # TODO Check for errors, this is highly sensitive stuff here
-    t = nitrogen - np.array(line.strut)
+    # if the planes do not intersect, we do not compute a hydrogen
+    if line is None:
+        return None
+
+    # get candidates for positions of Hydrogen
+    # via solving an quadratic formula
+    t = aa2_nitrogen - line.strut
 
     b0 = line.direction[0]
     b1 = line.direction[1]
     b2 = line.direction[2]
 
     p0 = np.power(b0, 2) + np.power(b1, 2) + np.power(b2, 2)
-    p1 = -1 * (2 * t[0] * b0 + 2 * t[1] * b1 + 2 * t[2] * b2)
-    p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2) - 0.9409
+    p1 = (-1) * (2 * t[0] * b0 + 2 * t[1] * b1 + 2 * t[2] * b2)
+    p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2) - para.NH_DISTANCE2
 
     roots = np.roots((p0, p1, p2))
 
     # decide for root which maximizes distance to oxygen.
-    candidate1 = np.array(line.strut) + roots[0] * np.array(line.direction)
-    candidate2 = np.array(line.strut) + roots[1] * np.array(line.direction)
+    candidate1 = line.strut + roots[0] * line.direction
+    candidate2 = line.strut + roots[1] * line.direction
 
-    # compute distances of candidates to o_carboxyl
-    candidate1_dist = np.linalg.norm(candidate1 - o_carboxyl)
-    candidate2_dist = np.linalg.norm(candidate2 - o_carboxyl)
+    # compute distances of candidates to oxygen of aa1
+    candidate1_dist = np.linalg.norm(candidate1 - aa1_oxygen)
+    candidate2_dist = np.linalg.norm(candidate2 - aa1_oxygen)
 
     return candidate2 if candidate2_dist > candidate1_dist else candidate1
+
+
+def _validate(aa):
+    """
+    Check whether amino acid aa is valid (it must contain at least
+    four atoms. Otherwise, something is wrong.
+
+    :param aa: Amino acid (residue in BioPython) to be validated.
+    :return: True iff aa is valid
+    """
+
+    return len(aa.get_unpacked_list()) > 3
+
+
