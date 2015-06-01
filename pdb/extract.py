@@ -106,7 +106,10 @@ def get_backbone_torsion_angles(generator_aa, pos_helix, pos_sheet):
         chain = residue.get_full_id()[2]
         if chain is not 'A':
             break
-        next_residue = generator_aa.next()
+        try:
+            next_residue = generator_aa.next()
+        except StopIteration:
+            break
         if residue_pos in pos_helix and next_residue.get_id()[1] in pos_helix:
             torsion_angles_helix.append(compute_torsion_angles(residue,
                                                                next_residue))
