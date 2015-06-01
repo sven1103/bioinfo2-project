@@ -1,11 +1,13 @@
 __author__ = 'sven'
 
 import sys
-import helper
 import os
 import csv
-import pdb.extract as ex
+
 from Bio import PDB
+
+import helper
+import pdb.extract as ex
 
 
 def reformat_list(list):
@@ -44,7 +46,7 @@ def main(args):
             ex.get_secondary_structure_annotation(path_to_pdb + protein)
         residues = ex.get_amino_acids(structure)
         temp_angles_helices, temp_angles_sheets = \
-            ex.get_backbone_torsion_angles(residues, temp_pos_helices,
+            ex.get_backbone_torsion_angles(residues, temp_pos_helices[1],
                                            temp_pos_sheets)
         torsion_angles_helices.append(temp_angles_helices)
         torsion_angles_sheets.append(temp_angles_sheets)

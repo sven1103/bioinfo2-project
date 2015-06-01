@@ -4,25 +4,35 @@ the BioPython library.
 """
 import math
 import warnings
+from collections import defaultdict
 
 from Bio import BiopythonWarning, PDB
 
 import constants
 
 
-# remove the ugly warning from the PDB module, that chains are discontinuous
+
+
+# remove the ugly warning from the PDB module that chains are discontinuous
 warnings.simplefilter("ignore", BiopythonWarning)
 
 
-def get_amino_acids(struc):
+def get_amino_acids(struc, positions=None):
     """
     Gets all amino acids of specified PDB file
     :param struc: Structure objects as returned by BioPythons PDB file parser
     :return: Generator of all Amino Acid residues of PDB file
     """
     for residue in struc.get_residues():
+
+        segid = residue.get_id()[1]
         if residue.get_resname() in constants.AMINO_ACIDS:
-            yield residue
+
+            if positions is not None and segid not in positions:
+                continue
+            else:
+                yield residue
+
 
 def get_atom_max_serial_number(struc):
 
@@ -45,19 +55,26 @@ def get_secondary_structure_annotation(file):
                                                           [1]: beta sheets
     """
     pdb_file = open(file, "r")
-    record_sheet_aa = []  # A list with residue positions in sheets
-    record_helix_aa = []  # A list with residue positions in helices
+
+    # A list with residue positions in sheets
+    record_sheet_aa = []
+    # A dictionary with helix types and corresponding positions
+    record_helix_aa = defaultdict(list)
+
     for line in pdb_file.readlines():
         # if line provides a HELIX information
-        if "HELIX" in line[0:5] and "A" in line[19]:
+        if line.startswith("HELIX") and "A" in line[19]:
             # we want only the residues of one chain to avoid duplicates
-            # check for helix class
-            if int(line[39:40]) == 1:
-                # '1' is default alpha helix
-                # record the aminoacid residue position in a helix
-                record_helix_aa += range(int(line[21:25]),
-                                         int(line[33:37]) + 1)
-        elif "SHEET" in line[0:5] and "A" in line[21]:
+
+            # extract helix class
+            hclass = int(line[39:40])
+
+            # record the aminoacid residue position in a helix
+            record_helix_aa[hclass].extend(range(int(line[21:25]),
+                                                 int(line[33:37]) + 1))
+
+        # if line provides a SHEET information
+        elif line.startswith("SHEET") and "A" in line[21]:
             # if line provides a SHEET information
             start_res = int(line[22:26])  # the start residue of a sheet
             term_res = int(line[33:37])  # the terminating res. of a sheet
@@ -127,8 +144,8 @@ if __name__ == "__main__":
     residues = get_amino_acids(struct)
     # example: print the residues that are in helices
     structure_positions = get_secondary_structure_annotation(pdb_file)
-    print structure_positions[0]
-    res = get_backbone_torsion_angles(residues, structure_positions[0],
+    print structure_positions[0][1]
+    res = get_backbone_torsion_angles(residues, structure_positions[0][1],
                                       structure_positions[1])
     # alpha helices torsions
     for angles in res[0]:

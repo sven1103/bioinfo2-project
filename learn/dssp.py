@@ -7,13 +7,22 @@ from pdb.extract import get_amino_acids
 import pdb.constants as co
 
 
-def h_bonds(struc, min_seq_distance=2):
+def h_bonds(struc,
+            position=None,
+            min_seq_distance=2):
 
     for (aa1, aa2) in combinations(get_amino_acids(struc), 2):
 
         seqid1 = aa1.get_id()[1]
         seqid2 = aa2.get_id()[1]
 
+        # continue if aa1 and aa2 lie out of the specified position
+        if position is not None and \
+                not (seqid1 in position and seqid2 in position):
+
+            continue
+
+        # follow the minimal distance criterion of amino acids
         if np.abs(seqid1 - seqid2) < min_seq_distance:
             continue
 
@@ -39,7 +48,9 @@ def h_bonds(struc, min_seq_distance=2):
 
         # we report a Hydrogen bond between aa1 and aa2 if the
         # potential falls under the energy cutoff
-        if potential(r_ON, r_CH, r_OH, r_CN) < co.HBOND_THRESHOLD:
+        pot = potential(r_ON, r_CH, r_OH, r_CN)
+
+        if pot < co.HBOND_THRESHOLD:
             yield (aa1, aa2)
 
 
