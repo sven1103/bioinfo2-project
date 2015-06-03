@@ -48,9 +48,7 @@ for pdb_path in pdb_paths:
             hb_pattern = HydrogenBondPattern(2)
 
             # extract all hydrogen bonds
-            for (aa1, aa2) in hb_pattern.encode(get_amino_acids(sha.struc)):
+            for (aa1, aa2, pot) in hb_pattern.encode(get_amino_acids(sha.struc)):
 
-                line = str(aa1.get_id()[1]) + ' ' + str(aa2.get_id()[1])
+                line = str(aa1.get_id()[1]) + ' ' + str(aa2.get_id()[1]) + ' ' + str(pot)
                 fw.write(line + os.linesep)
-
-

@@ -60,7 +60,22 @@ class HydrogenBondPattern(object):
             r_CH = np.linalg.norm(aa1_c_carboxyl - aa2_hydrogen)
             r_OH = np.linalg.norm(aa1_o_carboxyl - aa2_hydrogen)
             r_CN = np.linalg.norm(aa1_c_carboxyl - aa2_nitrogen)
+            pot = potential(r_ON, r_CH, r_OH, r_CN)
 
-            if potential(r_ON, r_CH, r_OH, r_CN) < co.HBOND_THRESHOLD:
-                res.append((aa1, aa2))
+            if pot < co.HBOND_THRESHOLD:
+                res.append((aa1, aa2, pot))
+
         return res
+
+def read_window(file_path, window_size, positions=None):
+    """
+    Returns all entities of length `window_size` for the specified
+    file in `file_path` only for the Positions `positions` we are interested
+    in.
+
+    :param file_path:
+    :param window_size:
+    :param positions:
+    :return:
+    """
+    pass
