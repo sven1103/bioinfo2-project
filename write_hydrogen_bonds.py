@@ -12,7 +12,7 @@ from learn.HydrogenBondPattern import HydrogenBondPattern
 
 
 # directory where the hydrogen bonds should be written to
-hb_dir = 'hydrogen_bonds'
+hb_dir = 'training_data'
 
 # where the PDB files are that should be used
 pdb_files_path = 'material/training/'
