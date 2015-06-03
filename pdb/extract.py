@@ -2,6 +2,7 @@
 Extract some required attributes from PDB files using
 the BioPython library.
 """
+__author__ = 'fillinger'
 import math
 import warnings
 from collections import defaultdict
@@ -142,15 +143,16 @@ def get_backbone_torsion_angles(generator_aa, pos_helix, pos_sheet):
 
 if __name__ == "__main__":
     # test file
-    #pdb_file = "/home/sven/Git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
-    pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
+    pdb_file = "/home/sven/Git/bioinformatics2/assignment_2/pdb/3PSD.pdb"
+    #pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/3PSD.pdb"
     struct = PDB.PDBParser().get_structure("test", pdb_file)
     residues = get_amino_acids(struct)
     # example: print the residues that are in helices
     structure_positions = get_secondary_structure_annotation(pdb_file)
-    print structure_positions[0][1]
+    print structure_positions[1]
     res = get_backbone_torsion_angles(residues, structure_positions[0][1],
                                       structure_positions[1])
+    """
     # alpha helices torsions
     for angles in res[0]:
         print angles[0], ":", angles[1]
@@ -158,4 +160,4 @@ if __name__ == "__main__":
     # beta sheet torsions
     print "-----------------"
     for angles in res[1]:
-        print angles[0], ":", angles[1]
+        print angles[0], ":", angles[1]"""
