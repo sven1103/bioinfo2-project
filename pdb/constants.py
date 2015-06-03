@@ -13,3 +13,8 @@ DERIVATION_H = 1e-3
 HNCA_ANGLE_DEG = 119
 NH_DISTANCE2 = 0.9409
 NH_DISTANCE = 0.97
+
+# Useful regular expressions.
+
+# Matches Sequence of whitespace with any length (at least one char)
+RE_WHITESPACE = r'[ \t\n\r\f\v]+'
