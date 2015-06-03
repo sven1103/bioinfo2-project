@@ -12,12 +12,11 @@ import constants
 
 
 
-
 # remove the ugly warning from the PDB module that chains are discontinuous
 warnings.simplefilter("ignore", BiopythonWarning)
 
 
-def get_amino_acids(struc, positions=None):
+def get_amino_acids(struc, positions=None, chain='A'):
     """
     Gets all amino acids of specified PDB file
     :param struc: Structure objects as returned by BioPythons PDB file parser
@@ -26,6 +25,11 @@ def get_amino_acids(struc, positions=None):
     for residue in struc.get_residues():
 
         segid = residue.get_id()[1]
+
+        # skip if this residue does not belong to the chain of interest.
+        if chain != residue.get_full_id()[2]:
+            continue
+
         if residue.get_resname() in constants.AMINO_ACIDS:
 
             if positions is not None and segid not in positions:
