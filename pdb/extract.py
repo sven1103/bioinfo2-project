@@ -138,8 +138,8 @@ def get_backbone_torsion_angles(generator_aa, pos_helix, pos_sheet):
 
 if __name__ == "__main__":
     # test file
-    pdb_file = "/home/sven/Git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
-    #pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
+    #pdb_file = "/home/sven/Git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
+    pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/3VSU.pdb"
     struct = PDB.PDBParser().get_structure("test", pdb_file)
     residues = get_amino_acids(struct)
     # example: print the residues that are in helices
