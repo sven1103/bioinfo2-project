@@ -4,11 +4,12 @@ import re
 from collections import defaultdict
 
 import numpy as np
+from Bio.PDB import PDBParser
 
 import pdb.constants as co
 from learn.dssp import potential
 from pdb.hydrogen import _validate
-from util import window
+from learn.WindowExtractor import WindowExtractor
 
 
 class HydrogenBondPattern(object):
@@ -86,7 +87,7 @@ class HydrogenBondPattern(object):
 
         return res
 
-def encode_file_potential(file_path, window_size):
+def encode_file_potential(file_path, pdb,  window_size):
     """
     Yields all entities of length `window_size` for the specified
     file in `file_path`.
@@ -113,29 +114,25 @@ def encode_file_potential(file_path, window_size):
             hydrogen_bonds.append((int(splt[0]), int(splt[1]),
                                    float(splt[2]), float(splt[3])))
 
-        if not hydrogen_bonds:
-            return
-
-        # extract windows from the hydrogen bonds
-        # determine max position of hydrogen bonds
-        max_position = max(map(lambda x: max(x[0], x[1]),
-                               hydrogen_bonds))
-
         # map all position tuples to their potentials
         potential_map = defaultdict(list)
 
         for (aa1_pos, aa2_pos, pot1, pot2) in hydrogen_bonds:
             potential_map[(aa1_pos, aa2_pos)] = (pot1, pot2)
 
+        with open(pdb, 'r') as f2:
+            struc = PDBParser().get_structure(' ', f2)
+
         # use window of size window_size
-        for w in window(range(1, max_position+1), window_size):
+        we = WindowExtractor(struc, window_size, [])
+
+        for (positions, _) in we.entities():
 
             entity = []
 
             # consider all possible combinations of w
-            for (left, right) in combinations(w, 2):
+            for (left, right) in combinations(positions, 2):
 
-                # skip if left and right are neighbored
                 if np.abs(left - right) == 1:
                     continue
 
@@ -148,4 +145,4 @@ def encode_file_potential(file_path, window_size):
                 else:
                     entity.extend([0, 0])
 
-            yield (w, entity)
+            yield (positions, entity)
