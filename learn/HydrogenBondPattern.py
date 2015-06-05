@@ -133,9 +133,6 @@ def encode_file_potential(file_path, pdb,  window_size):
             # consider all possible combinations of w
             for (left, right) in combinations(positions, 2):
 
-                if np.abs(left - right) == 1:
-                    continue
-
                 # append if there is in fact an hb annotation for left, right
                 if (left, right) in potential_map:
 
