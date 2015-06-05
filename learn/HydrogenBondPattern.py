@@ -113,6 +113,9 @@ def encode_file_potential(file_path, window_size):
             hydrogen_bonds.append((int(splt[0]), int(splt[1]),
                                    float(splt[2]), float(splt[3])))
 
+        if not hydrogen_bonds:
+            return
+
         # extract windows from the hydrogen bonds
         # determine max position of hydrogen bonds
         max_position = max(map(lambda x: max(x[0], x[1]),
@@ -145,4 +148,4 @@ def encode_file_potential(file_path, window_size):
                 else:
                     entity.extend([0, 0])
 
-            yield entity
+            yield (w, entity)
