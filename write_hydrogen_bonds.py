@@ -9,8 +9,6 @@ from pdb.hydrogen import StructureHydrogenAdder
 from pdb.extract import get_amino_acids
 from learn.HydrogenBondPattern import HydrogenBondPattern
 
-
-
 # directory where the hydrogen bonds should be written to
 hb_dir = 'training_data'
 
