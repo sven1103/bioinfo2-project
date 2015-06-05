@@ -10,6 +10,7 @@ from learn.dssp import potential
 from pdb.hydrogen import _validate
 from util import window
 
+
 class HydrogenBondPattern(object):
 
     def __init__(self, min_seq_distance):
@@ -85,16 +86,17 @@ class HydrogenBondPattern(object):
 
         return res
 
-def read_window(file_path, window_size, positions=None):
+def encode_file_potential(file_path, window_size):
     """
     Yields all entities of length `window_size` for the specified
-    file in `file_path` only for the Positions `positions` we are interested
-    in.
+    file in `file_path`.
 
-    :param file_path:
-    :param window_size:
-    :param positions:
-    :return:
+    Encoding is a list of all hb potentials for all possible roles of
+    donor and acceptor.
+
+    :param file_path: Path to the .hb file
+    :param window_size: How long the window is considered to be
+    :return: Generator of all entities of the respective file
     """
     # fetch all hydrogen bonds in the specified file
     with open(file_path, 'r') as f:
@@ -107,6 +109,7 @@ def read_window(file_path, window_size, positions=None):
 
             # split line for whitespace
             splt = re.split(co.RE_WHITESPACE, line)
+
             hydrogen_bonds.append((int(splt[0]), int(splt[1]),
                                    float(splt[2]), float(splt[3])))
 
@@ -114,7 +117,6 @@ def read_window(file_path, window_size, positions=None):
         # determine max position of hydrogen bonds
         max_position = max(map(lambda x: max(x[0], x[1]),
                                hydrogen_bonds))
-        print max_position
 
         # map all position tuples to their potentials
         potential_map = defaultdict(list)
@@ -130,11 +132,17 @@ def read_window(file_path, window_size, positions=None):
             # consider all possible combinations of w
             for (left, right) in combinations(w, 2):
 
+                # skip if left and right are neighbored
+                if np.abs(left - right) == 1:
+                    continue
+
                 # append if there is in fact an hb annotation for left, right
                 if (left, right) in potential_map:
 
                     # fetch potentials
                     potentials = potential_map[(left, right)]
-                    entity.append((left, right, potentials[0], potentials[1]))
+                    entity.extend([potentials[0], potentials[1]])
+                else:
+                    entity.extend([0, 0])
 
             yield entity
