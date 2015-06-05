@@ -36,7 +36,7 @@ for pdb_path in pdb_paths:
     with open(pdb_path, 'r') as f:
 
         # open file where we want to write the hydrogen bonds into
-        with open(hb_dir + os.path.sep + pdb_name, 'w') as fw:
+        with open(hb_dir + os.path.sep + pdb_name + '.hb', 'w') as fw:
 
             struc = PDBParser().get_structure(pdb_name, f)
 
@@ -48,7 +48,7 @@ for pdb_path in pdb_paths:
             hb_pattern = HydrogenBondPattern(2)
 
             # extract all hydrogen bonds
-            for (aa1, aa2, pot) in hb_pattern.encode(get_amino_acids(sha.struc)):
+            for (aa1, aa2, pot1, pot2) in hb_pattern.encode(get_amino_acids(sha.struc)):
 
-                line = str(aa1.get_id()[1]) + ' ' + str(aa2.get_id()[1]) + ' ' + str(pot)
+                line = str(aa1.get_id()[1]) + ' ' + str(aa2.get_id()[1]) + ' ' + str(pot1) + ' ' + str(pot2)
                 fw.write(line + os.linesep)
