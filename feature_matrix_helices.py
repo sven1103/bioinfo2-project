@@ -3,7 +3,8 @@ import os
 import re
 
 from Bio.PDB import PDBParser
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.cross_validation import cross_val_score
 
 from pdb.constants import  RE_HB, RE_PDB
@@ -11,6 +12,7 @@ from pdb.extract import get_secondary_structure_annotation
 from learn.HydrogenBondPattern import encode_file_potential
 from learn.WindowExtractor import  WindowExtractor
 from learn.chou_fasman import ChouFasmanHelix
+
 
 
 
@@ -116,6 +118,6 @@ X2, Y2 = chou_fasman_parameters(pdb_dir)
 
 X = [left + right for (left, right) in zip(X1,X2)]
 Y = [left + right for (left, right) in zip(Y1,Y2)]
-clf = DecisionTreeClassifier(max_depth=7)
+clf = RandomForestClassifier(n_estimators=10)
 
 print cross_val_score(clf, X, Y, cv=4)
