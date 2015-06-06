@@ -88,7 +88,7 @@ def get_secondary_structure_annotation(file):
     return record_helix_aa, record_sheet_aa
 
 
-def compute_torsion_angles(residue, next_residue):
+def compute_torsion_angles(previous_residue, residue, next_residue):
     """
     Little helper function, calculates the backbone phi and psi torsion
     angles from the given residues and returns them
@@ -97,21 +97,20 @@ def compute_torsion_angles(residue, next_residue):
     """
     # extract the atoms for the torsion calculation
     # 1.) for the phi
-    atom_CO_1 = residue['C'].get_vector()
+    atom_CO_0 = previous_residue['C'].get_vector()
     atom_N_1 = residue['N'].get_vector()
     atom_CA_1 = residue['CA'].get_vector()
-    atom_CA_2 = next_residue['CA'].get_vector()
-    atom_CO_2 = next_residue['C'].get_vector()
+    atom_CO_1 = residue['C'].get_vector()
     atom_N_2 = next_residue['N'].get_vector()
 
-    phi_angle = PDB.calc_dihedral(atom_CO_1, atom_N_2, atom_CA_2, atom_CO_2)
+    phi_angle = PDB.calc_dihedral(atom_CO_0, atom_N_1, atom_CA_1, atom_CO_1)
     psi_angle = PDB.calc_dihedral(atom_N_1, atom_CA_1, atom_CO_1, atom_N_2)
 
     # convert into degrees
     return math.degrees(phi_angle), math.degrees(psi_angle)
 
 
-def get_backbone_torsion_angles(generator_aa, pos_helix, pos_sheet):
+def get_backbone_torsion_angles(generator_aa, pos_helix=None, pos_sheet=None):
     """
     Calculates the backbone torsion angles for annotated alpha-helices and
     beta-sheets from a Generator with all amino acid residues from a PDB-file
@@ -123,21 +122,62 @@ def get_backbone_torsion_angles(generator_aa, pos_helix, pos_sheet):
     torsion_angles_helix = []
     torsion_angles_sheet = []
 
-    for residue in generator_aa:
-        residue_pos = residue.get_id()[1]
-        chain = residue.get_full_id()[2]
-        if chain is not 'A':
-            break
-        try:
-            next_residue = generator_aa.next()
-        except StopIteration:
-            break
-        if residue_pos in pos_helix and next_residue.get_id()[1] in pos_helix:
-            torsion_angles_helix.append(compute_torsion_angles(residue,
-                                                               next_residue))
-        elif residue_pos in pos_sheet and next_residue.get_id()[1] in pos_sheet:
-            torsion_angles_sheet.append(compute_torsion_angles(residue,
-                                                               next_residue))
+    if pos_helix is None:
+        previous_residue = 0
+        for residue in generator_aa:
+            if previous_residue == 0:
+                # print "init"
+                previous_residue = residue
+                curr_residue = residue
+                next_residue = generator_aa.next()
+            else:
+                print "now2 here"
+                previous_residue = curr_residue
+                curr_residue = next_residue
+                next_residue = residue
+
+            chain = residue.get_full_id()[2]
+            if chain is not 'A':
+                break
+            print previous_residue.get_id()[1],\
+                curr_residue.get_id()[1], next_residue.get_id()[1]
+            torsion_angles_helix.append(
+                compute_torsion_angles(previous_residue,
+                                       curr_residue,
+                                       next_residue))
+    else:
+        print "jo"
+        previous_residue = 0
+        for residue in generator_aa:
+            if previous_residue == 0:
+                print "init"
+                previous_residue = residue
+                curr_residue = residue
+                next_residue = generator_aa.next()
+            else:
+                print "now here"
+                previous_residue = curr_residue
+                curr_residue = next_residue
+                next_residue = residue
+
+            chain = residue.get_full_id()[2]
+            if chain is not 'A':
+                break
+            print previous_residue.get_id()[1],\
+                curr_residue.get_id()[1], next_residue.get_id()[1]
+
+            if curr_residue.get_id()[1] in pos_helix and\
+                    next_residue.get_id()[1] in pos_helix:
+                torsion_angles_helix.append(
+                    compute_torsion_angles(previous_residue,
+                                           curr_residue,
+                                           next_residue))
+            elif curr_residue.get_id()[1] in pos_sheet and\
+                    next_residue.get_id()[1] in pos_sheet:
+                torsion_angles_sheet.append(
+                    compute_torsion_angles(previous_residue,
+                                           curr_residue,
+                                           next_residue))
     return torsion_angles_helix, torsion_angles_sheet
 
 
@@ -149,10 +189,10 @@ if __name__ == "__main__":
     residues = get_amino_acids(struct)
     # example: print the residues that are in helices
     structure_positions = get_secondary_structure_annotation(pdb_file)
-    print structure_positions[1]
+    print structure_positions[0][1]
     res = get_backbone_torsion_angles(residues, structure_positions[0][1],
                                       structure_positions[1])
-    """
+
     # alpha helices torsions
     for angles in res[0]:
         print angles[0], ":", angles[1]
@@ -160,4 +200,4 @@ if __name__ == "__main__":
     # beta sheet torsions
     print "-----------------"
     for angles in res[1]:
-        print angles[0], ":", angles[1]"""
+        print angles[0], ":", angles[1]
