@@ -13,7 +13,6 @@ class WindowExtractorSheets(object):
     """
     def __init__(self,
                  struc,
-                 window_size,
                  pdb_file):
         """
         WindowExtractorSheets object.
@@ -31,7 +30,6 @@ class WindowExtractorSheets(object):
         :param pdb_file: The pdb file to read out
         """
         self.struc = struc
-        self.window_size = window_size
         self.pdb = pdb_file
         self.list_all_aa = []
         self.feature_list = []
@@ -58,7 +56,7 @@ class WindowExtractorSheets(object):
         # and assigns position types
         for residue_pos in range(len(self.list_all_aa)):
             # the break condition, when the window is at the end
-            if residue_pos+2 == len(self.list_all_aa):
+            if residue_pos+2 == len(self.list_all_aa)-1:
                 break
             # build the torsion angles and the type
             self.feature_list.append((
@@ -106,9 +104,10 @@ if __name__ == "__main__":
     # make a structure object
     struc = PDB.PDBParser().get_structure("test", pdb_test_file)
     # test the class
-    obj = WindowExtractorSheets(struc, 3, pdb_test_file)
+    obj = WindowExtractorSheets(struc, pdb_test_file)
     obj.compute_features()
-    print obj.get_features()
+    for torsion_set in obj.get_features():
+        print torsion_set
 
 
 
