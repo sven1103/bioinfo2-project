@@ -15,22 +15,36 @@ pdb_dir = "/home/sven/Git/bioinformatics2/assignment_2/pdb"
 
 
 def torsion_angles(pdb_dir):
+    """
+    Uses the WindowExtractorSheets class to extract torsion angle triplets.
+    It will compute the features and the encoding for the classification.
+    :param pdb_dir: The pdb directory
+    :return: feature matrix and target vector
+    """
 
     # Init the feature matrix and the target vector
     X = []
     y = []
 
+    # the pdb-files sorted
     pdb_files = sorted(filter(lambda x: re.match(RE_PDB, x) is not None,
                               os.listdir(pdb_dir)))
-
+    # make absolute paths
     pdb_paths = map(lambda x: pdb_dir + os.path.sep + x, pdb_files)
-    print pdb_paths
 
-    for pdb_file in pdb_paths[1:]:
+    # iterate over all pdb-files
+    for pdb_file in pdb_paths:
         print "Extracting information from: ", pdb_file
+        # make a PDB structure object from the file
         struc = PDBParser().get_structure("", pdb_file)
-        window_extractor = WindowExtractorSheets.WindowExtractorSheets(struc, pdb_file)
+        # create a WindowExtractionSheets object.
+        # It will extract the sheet relevant features from the pdb-file
+        # and provide a feature matrix as well as the target vector.
+        window_extractor = WindowExtractorSheets.WindowExtractorSheets(struc,
+                                                                       pdb_file)
+        # compute the features
         window_extractor.compute_features()
+        # build the feature matrix and target vector
         X_temp, y_temp = feature_converter(window_extractor)
         X.extend(X_temp)
         y.extend(y_temp)
@@ -50,6 +64,7 @@ def feature_converter(window_extractor_obj):
     feature_matrix = []
     target_vector = []
 
+    # makes a nice feature matrix and a target vector
     for feature in feature_set:
         row = []
         for torsion_pair in feature[0]:
