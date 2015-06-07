@@ -23,7 +23,7 @@ class WindowExtractorSheets(object):
             - beginning strand triple [x-s-s] -> 1
             - in strand triple [s-s-s] -> 2
             - terminating strand triple [s-s-x] -> 3
-            - non strand triple [x-x-x] -> -1
+            - non strand triple [x-x-x] -> 0
 
         :param struc: BioPython Structure Object
         :param window_size: Number of consecutive amino acids that should be
@@ -33,39 +33,71 @@ class WindowExtractorSheets(object):
         self.struc = struc
         self.window_size = window_size
         self.pdb = pdb_file
+        self.list_all_aa = []
+        self.feature_list = []
+        self.strand_aa = []
 
-    def extract_features(self):
+    def compute_features(self):
         """
         Extract the features from the given pdb file
         :return: a list containing the features and a list containing the
         target encoding as integer values
         """
-        all_aa = list(ex.get_amino_acids(self.struc))
-        _, strand_aa = ex.get_secondary_structure_annotation(self.pdb)
+        # extract all amino acids from the PDB Structure
+        all_aa = ex.get_amino_acids(self.struc)
+        # convert to list
+        self.list_all_aa = list(all_aa)
+        # get the sheet annotation
+        _, self.strand_aa = ex.get_secondary_structure_annotation(self.pdb)
+        # compute all torsion angles
+        all_torsion_angles, _ = ex.get_backbone_torsion_angles(
+            ex.get_amino_acids(self.struc)
+        )
 
+        # the window slider of size 3, slides over the primary sequence
+        # and assigns position types
+        for residue_pos in range(len(self.list_all_aa)):
+            # the break condition, when the window is at the end
+            if residue_pos+2 == len(self.list_all_aa):
+                break
+            # build the torsion angles and the type
+            self.feature_list.append((
+                all_torsion_angles[residue_pos:residue_pos+3],
+                self.evaluate_triplet_type(
+                    self.list_all_aa[residue_pos].get_id()[1]))
+            )
 
+    def get_features(self):
+        """
+        Get the feature list
+        :return: the feature list
+        """
+        return self.feature_list
 
-        print all_aa
-        print strand_aa
-        return [-1]
-
-
-def calculate_torsions_triplet(aa_list):
-    """
-    Will compute the three torsion angle pairs for the respective triple
-    :param aa_list:
-    :return: a list with 3 tuples of torsion angles
-    """
-    return []
-
-
-def evaluate_triplet_type(aa_list_all, aa_sheets):
-    """
-    Evaluates a triple and assign its type
-    :param aa_list_all:
-    :param aa_sheets:
-    :return:
-    """
+    def evaluate_triplet_type(self, residue_pos):
+        """
+        Evaluates a triplet and assign its type
+        :param aa_list_all:
+        :param aa_sheets:
+        :return:
+        """
+        # the string that will store the triplet type
+        triplet_type = ""
+        for curr_res in range(residue_pos, residue_pos+3):
+            if curr_res in self.strand_aa:
+                triplet_type += "s"
+            else:
+                triplet_type += "x"
+        # assign the type
+        if triplet_type in "xss":
+            type_classifier = 1
+        elif triplet_type in "sss":
+            type_classifier = 2
+        elif triplet_type in "ssx":
+            type_classifier = 3
+        else:
+            type_classifier = 0
+        return type_classifier
 
 
 if __name__ == "__main__":
@@ -74,8 +106,9 @@ if __name__ == "__main__":
     # make a structure object
     struc = PDB.PDBParser().get_structure("test", pdb_test_file)
     # test the class
-    test = WindowExtractorSheets(struc, 3, pdb_test_file)
-
+    obj = WindowExtractorSheets(struc, 3, pdb_test_file)
+    obj.compute_features()
+    print obj.get_features()
 
 
 

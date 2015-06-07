@@ -29,7 +29,7 @@ def write_csv_angles(path_output, torsion_angles, suffix):
     with open(path_output + "torsion_angles_" + suffix, "wb") as csvfile:
         writer = csv.writer(csvfile, delimiter=",")
         for element in torsion_angles:
-            print element
+            # print element
             writer.writerow([element[0], element[1]])
 
 
@@ -46,14 +46,13 @@ def main(args):
             ex.get_secondary_structure_annotation(path_to_pdb + protein)
         residues = ex.get_amino_acids(structure)
         temp_angles_helices, temp_angles_sheets = \
-            ex.get_backbone_torsion_angles(residues, temp_pos_helices[1],
-                                           temp_pos_sheets)
+            ex.get_backbone_torsion_angles(residues)
         torsion_angles_helices.append(temp_angles_helices)
         torsion_angles_sheets.append(temp_angles_sheets)
 
     torsion_angles_sheets = reformat_list(torsion_angles_sheets)
     torsion_angles_helices = reformat_list(torsion_angles_helices)
-    write_csv_angles(path_output, torsion_angles_sheets, "sheets")
-    write_csv_angles(path_output, torsion_angles_helices, "helices")
+    write_csv_angles(path_output, torsion_angles_sheets, "sheets_all")
+    write_csv_angles(path_output, torsion_angles_helices, "helices_all")
 
 main(sys.argv[1:])
