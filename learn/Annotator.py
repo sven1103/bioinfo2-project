@@ -14,11 +14,11 @@ class Annotator(object):
         y = 0
 
         # try to annotate a beta strand
-        if len(positions) == 3:
+        if len(positions) == 4:
 
             triplet_type = ''
 
-            for pos in positions:
+            for pos in positions[1:4]:
 
                 if pos in sheet_aa:
                     triplet_type += 's'

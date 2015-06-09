@@ -4,9 +4,9 @@ import os
 import re
 
 from Bio.PDB import PDBParser
-from sklearn.cross_validation import  cross_val_score
 
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.cross_validation import  cross_val_score
+from sklearn.ensemble import RandomForestClassifier
 
 from pdb.extract import get_secondary_structure_annotation, get_id
 from learn.WindowExtractor import WindowExtractor
@@ -14,13 +14,15 @@ from learn.Annotator import Annotator
 from pdb.constants import RE_PDB, RE_HB
 from learn.features.HydrogenBondPatternFile import get_hydrogen_bond_pattern_file
 from learn.features.ChouFasmanHelix import ChouFasmanHelix
+from learn.features.BackboneTorsionAngles import BackboneTorsionAngles
+
 
 
 
 
 # files with hydrogen bonds
 hb_dir = 'material/features/hydrogen_bonds'
-pdb_dir = 'material/training'
+pdb_dir = '/media/data0/Dropbox/BI2_project/material/training/'
 
 
 class FeatureContext(object):
@@ -73,14 +75,14 @@ fc = FeatureContext(pdb_files)
 
 hydrogen_bonds = get_hydrogen_bond_pattern_file(hb_files)()
 chou_fasman = ChouFasmanHelix()
+torsion_angles = BackboneTorsionAngles()
 
 # only interested in Helices
-annotator = Annotator([0, 1, 2, 3])
+annotator = Annotator([0, 4, 5, 6])
 
-X, Y = fc.construct_matrix([hydrogen_bonds], annotator, 5)
+X, Y = fc.construct_matrix([torsion_angles], annotator, 4)
 
-print X
 
-clf = DecisionTreeClassifier(max_depth=3)
+clf = RandomForestClassifier(n_estimators=10)
 
 print cross_val_score(clf, X, Y, cv=4)
