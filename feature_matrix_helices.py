@@ -1,17 +1,19 @@
 __author__ = 'lukas'
+
 import os
 import re
 
 from Bio.PDB import PDBParser
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.cross_validation import  cross_val_score
 
-from sklearn.cross_validation import cross_val_score
+from sklearn.tree import DecisionTreeClassifier
 
-from pdb.constants import  RE_HB, RE_PDB
-from pdb.extract import get_secondary_structure_annotation
-from learn.HydrogenBondPattern import encode_file_potential
-from learn.WindowExtractor import  WindowExtractor
-from learn.chou_fasman import ChouFasmanHelix
+from pdb.extract import get_secondary_structure_annotation, get_id
+from learn.WindowExtractor import WindowExtractor
+from learn.Annotator import Annotator
+from pdb.constants import RE_PDB, RE_HB
+from learn.features.HydrogenBondPatternFile import get_hydrogen_bond_pattern_file
+from learn.features.ChouFasmanHelix import ChouFasmanHelix
 
 
 
@@ -21,103 +23,64 @@ hb_dir = 'material/features/hydrogen_bonds'
 pdb_dir = 'material/training'
 
 
-def hydrogen_bonds(hb_dir, pdb_dir):
-    """
-    Generates Feature Matrix and class labels for hydrogen bon
+class FeatureContext(object):
 
-    :param hb_dir:
-    :param pdb_dir:
-    :return:
-    """
+    def __init__(self, pdb_files):
 
-    X = []
-    Y = []
+        self.pdb_files = pdb_files
 
-    # sort files to ensure that they are equally long
-    hb_files = sorted(filter(lambda x: re.match(RE_HB, x) is not None,
-                             os.listdir(hb_dir)))
-    pdb_files = sorted(filter(lambda x: re.match(RE_PDB, x) is not None,
-                              os.listdir(pdb_dir)))
+    @staticmethod
+    def _update(pdb_path, features):
+        for feature in features:
+            feature.set_context(pdb_path)
 
-    # assemble paths
-    feat_hb_paths = map(lambda x: hb_dir + os.path.sep + x,
-                        hb_files)
-    feat_pdb_paths = map(lambda x: pdb_dir + os.path.sep + x,
-                         pdb_files)
-
-    # examine all pdb files
-    for (pdb, hb) in zip(feat_pdb_paths, feat_hb_paths):
-
-        # extract helix positions
-        helices = get_secondary_structure_annotation(pdb)[0]
-
-        # take all entities of this pdb file into consideration
-        for (w, training_point) in encode_file_potential(hb, pdb, 5):
-
-            X.append(training_point)
-            Y.append(assign_y(w, helices[1], helices[5]))
-
-    return X, Y
-
-
-def chou_fasman_parameters(pdb_dir):
+    def construct_matrix(self, features, annotator, window_size):
 
         X = []
         Y = []
 
-        pdb_files = sorted(filter(lambda x: re.match(RE_PDB, x) is not None,
-                              os.listdir(pdb_dir)))
+        for pdb in self.pdb_files:
 
-        feat_pdb_paths = map(lambda x: pdb_dir + os.path.sep + x,
-                             pdb_files)
+            # set all features to the the current PDB contest
+            FeatureContext._update(pdb, features)
 
-        for pdb in feat_pdb_paths:
-
-            # extract helix positions
-            helices = get_secondary_structure_annotation(pdb)[0]
-
-            # parse structure
+            # set up Window Extractor for current PDB file
             with open(pdb, 'r') as f:
-                struc = PDBParser().get_structure('', f)
 
-            we = WindowExtractor(struc, 5, [ChouFasmanHelix()], None)
+                struc = PDBParser().get_structure(get_id(pdb), f)
 
-            # generate all entities
-            for (w, training_point) in we.entities():
+                helix_aa, sheet_aa = get_secondary_structure_annotation(pdb)
 
-                X.append(training_point)
-                Y.append(assign_y(w, helices[1], helices[5]))
+                we = WindowExtractor(struc, window_size, features)
+
+                for (positions, training_point) in we.entities():
+
+                    X.append(training_point)
+                    Y.append(annotator(positions, helix_aa, sheet_aa))
 
         return X, Y
 
+pdb_files = map(lambda y: pdb_dir + os.path.sep + y,
+                filter(lambda x: re.match(RE_PDB, x) is not None,
+                       os.listdir(pdb_dir)))
 
-def assign_y(w, helices_alpha, helices_310):
-
-    helices_alpha_set = set(helices_alpha)
-    helices_310_set = set(helices_310)
-
-    set_w = set(w)
-
-    # check whether w is part of alpha helix
-    if set_w <= helices_alpha_set:
-        y = 1
-
-    # check the same for 310 helix
-    elif set_w <= helices_310_set:
-        y = 3
-
-    # w does not seem to belong to a helix
-    else:
-        y = 0
-
-    return y
+hb_files = map(lambda y: hb_dir + os.path.sep + y,
+               filter(lambda x: re.match(RE_HB, x) is not None,
+                      os.listdir(hb_dir)))
 
 
-X1, Y1 = hydrogen_bonds(hb_dir, pdb_dir)
-X2, Y2 = chou_fasman_parameters(pdb_dir)
+fc = FeatureContext(pdb_files)
 
-X = [left + right for (left, right) in zip(X1,X2)]
-Y = [left + right for (left, right) in zip(Y1,Y2)]
-clf = RandomForestClassifier(n_estimators=10)
+hydrogen_bonds = get_hydrogen_bond_pattern_file(hb_files)()
+chou_fasman = ChouFasmanHelix()
+
+# only interested in Helices
+annotator = Annotator([0, 1, 2, 3])
+
+X, Y = fc.construct_matrix([hydrogen_bonds], annotator, 5)
+
+print X
+
+clf = DecisionTreeClassifier(max_depth=3)
 
 print cross_val_score(clf, X, Y, cv=4)

@@ -44,7 +44,7 @@ class StructureHydrogenAdder(object):
         """
         for (aa1, aa2) in window(extract.get_amino_acids(self.struc), n):
 
-            if _validate(aa1) and _validate(aa2):
+            if validate(aa1) and validate(aa2):
                 yield (aa1, aa2)
 
     def supplement(self):
@@ -178,7 +178,7 @@ class StructureHydrogenAdder(object):
         return Atom.Atom('H', res, 0, 1, ' ', ' H  ',
                          self._next_atom_serial(), 'H')
 
-def _validate(aa):
+def validate(aa):
     """
     Check whether amino acid aa is valid (it must contain at least
     four atoms. Otherwise, something is wrong.

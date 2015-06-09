@@ -1,6 +1,9 @@
+#TODO I guess we do not need this class anymore
+
+
+
 __author__ = 'fillinger'
 
-import numpy as np
 from sklearn import cross_validation
 from sklearn import svm
 

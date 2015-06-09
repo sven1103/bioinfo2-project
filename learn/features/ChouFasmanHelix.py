@@ -1,4 +1,6 @@
 __author__ = 'lukas'
+from Feature import Feature
+
 
 HELICES = {'GLU': 1.53,
            'ALA': 1.45,
@@ -22,10 +24,10 @@ HELICES = {'GLU': 1.53,
            'GLY': 0.53}
 
 
-class ChouFasmanHelix(object):
+class ChouFasmanHelix(Feature):
 
     def __init__(self):
-        pass
+        super(ChouFasmanHelix, self).__init__()
 
     def encode(self, entity):
         """

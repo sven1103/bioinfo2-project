@@ -1,20 +1,18 @@
 from __future__ import division
 from itertools import combinations
-import re
-from collections import defaultdict
 
 import numpy as np
-from Bio.PDB import PDBParser
 
 import pdb.constants as co
 from learn.dssp import potential
-from pdb.hydrogen import _validate
-from learn.WindowExtractor import WindowExtractor
+from pdb.hydrogen import validate
+from Feature import Feature
 
 
-class HydrogenBondPattern(object):
+class HydrogenBondPattern(Feature):
 
     def __init__(self, min_seq_distance):
+        super(HydrogenBondPattern, self).__init__()
         self.min_seq_distance = min_seq_distance
 
     def encode(self, entity):
@@ -36,7 +34,7 @@ class HydrogenBondPattern(object):
 
             # do not consider this pair if the number of atoms of the
             # residues is not sufficient
-            if not (_validate(aa1) and _validate(aa2)):
+            if not (validate(aa1) and validate(aa2)):
                 continue
 
             segid1 = aa1.get_id()[1]
@@ -86,60 +84,3 @@ class HydrogenBondPattern(object):
                 res.append((aa1, aa2, potentials[0], potentials[1]))
 
         return res
-
-def encode_file_potential(file_path, pdb,  window_size):
-    """
-    Yields all entities of length `window_size` for the specified
-    file in `file_path`.
-
-    Encoding is a list of all hb potentials for all possible roles of
-    donor and acceptor.
-
-    :param file_path: Path to the .hb file
-    :param window_size: How long the window is considered to be
-    :return: Generator of all entities of the respective file
-    """
-    # fetch all hydrogen bonds in the specified file
-    with open(file_path, 'r') as f:
-
-        hydrogen_bonds = []
-
-        for line in f:
-
-            line = line.strip()
-
-            # split line for whitespace
-            splt = re.split(co.RE_WHITESPACE, line)
-
-            hydrogen_bonds.append((int(splt[0]), int(splt[1]),
-                                   float(splt[2]), float(splt[3])))
-
-        # map all position tuples to their potentials
-        potential_map = defaultdict(list)
-
-        for (aa1_pos, aa2_pos, pot1, pot2) in hydrogen_bonds:
-            potential_map[(aa1_pos, aa2_pos)] = (pot1, pot2)
-
-        with open(pdb, 'r') as f2:
-            struc = PDBParser().get_structure(' ', f2)
-
-        # use window of size window_size
-        we = WindowExtractor(struc, window_size, [])
-
-        for (positions, _) in we.entities():
-
-            entity = []
-
-            # consider all possible combinations of w
-            for (left, right) in combinations(positions, 2):
-
-                # append if there is in fact an hb annotation for left, right
-                if (left, right) in potential_map:
-
-                    # fetch potentials
-                    potentials = potential_map[(left, right)]
-                    entity.extend([potentials[0], potentials[1]])
-                else:
-                    entity.extend([0, 0])
-
-            yield (positions, entity)

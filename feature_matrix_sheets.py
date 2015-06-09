@@ -4,15 +4,15 @@ import os
 import re
 
 from Bio.PDB import PDBParser
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.cross_validation import cross_val_score
 
 from pdb.constants import RE_PDB
 from learn import WindowExtractorSheets
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.cross_validation import cross_val_score
-
-pdb_dir = "/home/sven/Git/bioinformatics2/assignment_2/pdb"
-
+pdb_dir_sven = "/home/sven/Git/bioinformatics2/assignment_2/pdb"
+pdb_dir_lukas = "/home/lukas/Dropbox/BI2_project/material/training/"
 
 def torsion_angles(pdb_dir):
     """
@@ -77,7 +77,7 @@ def feature_converter(window_extractor_obj):
 
 
 def main():
-    X, y = torsion_angles(pdb_dir)
+    X, y = torsion_angles(pdb_dir_lukas)
 
     clf = RandomForestClassifier(n_estimators=10)
 

@@ -19,6 +19,10 @@ NH_DISTANCE = 0.97
 # Matches Sequence of whitespace with any length (at least one char)
 RE_WHITESPACE = r'[ \t\n\r\f\v]+'
 
+# Matches any PDBID
+RE_PDBID = r'[1-9][0-9a-zA-Z]{3}'
+
+
 # Matches file that contains hydrogen bond data
 RE_HB = r'.*\.hb'
 
