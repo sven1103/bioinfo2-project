@@ -8,6 +8,9 @@ from learn.dssp import potential
 from pdb.hydrogen import validate
 from Feature import Feature
 
+from Bio import PDB
+from pdb.extract import get_amino_acids
+from pdb.hydrogen import StructureHydrogenAdder
 
 class HydrogenBondPattern(Feature):
 
@@ -84,3 +87,18 @@ class HydrogenBondPattern(Feature):
                 res.append((aa1, aa2, potentials[0], potentials[1]))
 
         return res
+
+
+if __name__ == "__main__":
+    #pdb_file = "/home/sven/Git/bioinformatics2/assignment_2/pdb/1SMC.pdb"
+    pdb_file = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/1q4k.pdb"
+    struct = PDB.PDBParser().get_structure("test", pdb_file)
+    residues = get_amino_acids(struct)
+    print "uhu"
+    sha = StructureHydrogenAdder(struct)
+    sha.supplement()
+    hbonds = HydrogenBondPattern(2)
+    for (aa1, aa2, pot1, pot2) in hbonds.encode(get_amino_acids(sha.struc)):
+
+        line = str(aa1.get_id()[1]) + ' ' + str(aa2.get_id()[1]) + ' ' + str(pot1) + ' ' + str(pot2)
+        print line
