@@ -1,7 +1,8 @@
 __author__ = 'sven'
 
+from Bio import PDB
+
 import pdb.extract as ex
-from Bio import BiopythonWarning, PDB
 
 
 class WindowExtractorSheets(object):
@@ -25,8 +26,6 @@ class WindowExtractorSheets(object):
             - non strand triple [x-x-x] -> 0
 
         :param struc: BioPython Structure Object
-        :param window_size: Number of consecutive amino acids that should be
-        considered as one entity.
         :param pdb_file: The pdb file to read out
         """
         self.struc = struc
@@ -75,8 +74,6 @@ class WindowExtractorSheets(object):
     def evaluate_triplet_type(self, residue_pos):
         """
         Evaluates a triplet and assign its type
-        :param aa_list_all:
-        :param aa_sheets:
         :return:
         """
         # the string that will store the triplet type

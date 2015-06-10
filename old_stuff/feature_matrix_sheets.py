@@ -9,7 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.cross_validation import cross_val_score
 
 from pdb.constants import RE_PDB
-from learn import WindowExtractorSheets
+from old_stuff import WindowExtractorSheets
 
 pdb_dir_sven = "/home/sven/Git/bioinformatics2/assignment_2/pdb"
 pdb_dir_lukas = "/home/lukas/Dropbox/BI2_project/material/training/"
