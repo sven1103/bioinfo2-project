@@ -7,17 +7,17 @@ from Bio.PDB import PDBParser
 
 from pdb.hydrogen import StructureHydrogenAdder
 from pdb.extract import get_amino_acids
-from learn.features import HydrogenBondPattern
+from learn.features.HydrogenBondPattern import HydrogenBondPattern
+from pdb.extract import get_id
 
 # directory where the hydrogen bonds should be written to
-hb_dir = 'training_data2'
+hb_dir = '/home/lukas/Desktop/hydrogen_bonds/'
 
 # where the PDB files are that should be used
-# pdb_files_path = 'material/training/'
-pdb_files_path = '/home/fillinger/git/bioinformatics2/assignment_2/pdb/'
+pdb_files_path = '/home/lukas/Dropbox/BI2_project/material/training/'
+
 
 # You do not need to modify anything below here
-
 
 # list of all files
 pdb_paths = map(lambda x: pdb_files_path + x, os.listdir(pdb_files_path))
@@ -29,7 +29,7 @@ if not os.path.exists(hb_dir):
 # open each file for reading
 for pdb_path in pdb_paths:
 
-    pdb_name = pdb_path.split('.')[0].split('/')[7]
+    pdb_name = get_id(pdb_path)
 
     with open(pdb_path, 'r') as f:
 
@@ -43,7 +43,7 @@ for pdb_path in pdb_paths:
             sha.supplement()
 
             # define that HBBonds should be extracted_
-            hb_pattern = HydrogenBondPattern.HydrogenBondPattern(2)
+            hb_pattern = HydrogenBondPattern(2)
 
             # extract all hydrogen bonds
             for (aa1, aa2, pot1, pot2) in hb_pattern.encode(get_amino_acids(sha.struc)):
