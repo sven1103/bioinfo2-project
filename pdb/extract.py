@@ -51,7 +51,9 @@ def get_atom_max_serial_number(struc):
                    struc.get_atoms()))
 
 
-def get_secondary_structure_annotation(file):
+# TODO Add possibility to extract Sheet annotation
+
+def get_secondary_structure_annotation(path):
     """
     Reads a PDB-file and returns two lists of residue positions in normal
     right handed helices and beta sheets. We need the residue positions and its
@@ -59,37 +61,57 @@ def get_secondary_structure_annotation(file):
     acids.
     Unfortunately, the PDB-module from BioPython does not support secondary
     structure read out so far...
-    :param file: the path to the pdb-file
+    :param path: the path to the pdb-file
     :return: a tuple of two lists of residue positions in [0]: helices
                                                           [1]: beta sheets
     """
-    pdb_file = open(file, "r")
-
     # A list with residue positions in sheets
-    record_sheet_aa = []
+    record_strand_aa = []
     # A dictionary with helix types and corresponding positions
     record_helix_aa = defaultdict(list)
 
-    for line in pdb_file.readlines():
-        # if line provides a HELIX information
-        if line.startswith("HELIX") and "A" in line[19]:
-            # we want only the residues of one chain to avoid duplicates
+    # keep track of start and end positions of all encountered sheets
+    record_sheets = []
+    current_sheet = []
+    strand_counter = 0
 
-            # extract helix class
-            hclass = int(line[39:40])
+    with open(path, 'r') as pdb_file:
+        for line in pdb_file:
+            # if line provides a HELIX information
+            if line.startswith("HELIX") and "A" in line[19]:
+                # we want only the residues of one chain to avoid duplicates
+                # extract helix class
 
-            # record the aminoacid residue position in a helix
-            record_helix_aa[hclass].extend(range(int(line[21:25]),
-                                                 int(line[33:37]) + 1))
+                hclass = int(line[39:40])
+                # record the aminoacid residue position in a helix
+                record_helix_aa[hclass].extend(range(int(line[21:25]),
+                                                     int(line[33:37]) + 1))
 
-        # if line provides a SHEET information
-        elif line.startswith("SHEET") and "A" in line[21]:
             # if line provides a SHEET information
-            start_res = int(line[22:26])  # the start residue of a sheet
-            term_res = int(line[33:37])  # the terminating res. of a sheet
-            record_sheet_aa += range(start_res, term_res, 1)
-    pdb_file.close()
-    return record_helix_aa, record_sheet_aa
+            elif line.startswith("SHEET") and "A" in line[21]:
+                # if line provides a SHEET information
+                start_res = int(line[22:26])  # the start residue of a sheet
+                term_res = int(line[33:37])  # the terminating res. of a sheet
+                record_strand_aa += range(start_res, term_res, 1)
+
+                # extract strand type
+                sclass = int(line[38:40])
+                current_sheet.append((start_res, term_res, sclass))
+
+                strand_counter += 1
+
+                # extract number of sheets in strands
+                strand_number = int(line[14:16])
+
+                # if this is the last strand of this sheet, we reset the
+                # the strand  and add this sheet to all sheets
+                if strand_counter == strand_number:
+
+                    strand_counter = 0
+                    record_sheets.append(list(current_sheet))
+                    current_sheet = []
+
+    return record_helix_aa, record_strand_aa, record_sheets
 
 
 def compute_torsion_angles(previous_residue, residue, next_residue):

@@ -4,6 +4,7 @@ import os
 import re
 
 from Bio.PDB import PDBParser
+
 from sklearn.cross_validation import  cross_val_score
 
 from sklearn.ensemble import RandomForestClassifier
@@ -15,6 +16,8 @@ from pdb.constants import RE_PDB, RE_HB
 from learn.features.HydrogenBondPatternFile import get_hydrogen_bond_pattern_file
 from learn.features.ChouFasmanHelix import ChouFasmanHelix
 from learn.features.BackboneTorsionAngles import BackboneTorsionAngles
+
+
 
 
 
@@ -71,14 +74,17 @@ class FeatureContext(object):
 
                 struc = PDBParser().get_structure(get_id(pdb), f)
 
-                helix_aa, sheet_aa = get_secondary_structure_annotation(pdb)
+                helix_aa, strand_aa, sheet_aa =\
+                    get_secondary_structure_annotation(pdb)
+
+                print sheet_aa
 
                 we = WindowExtractor(struc, window_size, features)
 
                 for (positions, training_point) in we.entities():
 
                     X.append(training_point)
-                    Y.append(annotator(positions, helix_aa, sheet_aa))
+                    Y.append(annotator(positions, helix_aa, strand_aa))
 
         return X, Y
 
