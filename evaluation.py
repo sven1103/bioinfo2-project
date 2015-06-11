@@ -5,8 +5,8 @@ from math import floor
 from sklearn.metrics import accuracy_score
 import numpy as np
 
-from FeatureContext import FeatureContext
 from learn import base
+from learn.FeatureContext import FeatureContext
 import configuration as conf
 
 
@@ -67,7 +67,7 @@ def evaluate_annotator(folds):
 
         X_train, Y_train = fc.construct_matrix(conf.strand_features,
                                                conf.strand_assigner,
-                                               conf.strand_window_size)
+                                                conf.strand_window_size)
         conf.strand_predictor.fit(X_train, Y_train)
 
         # evaluate all PDB files of the test set

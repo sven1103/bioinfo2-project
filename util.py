@@ -3,10 +3,14 @@ Provides utility functions that are general and do not fit in
 any other module.
 """
 from itertools import islice
+from collections import defaultdict
 import getopt
+import re
 import sys
 
 import numpy as np
+
+from pdb.constants import RE_PDBID
 
 
 def window(seq, n=2):
@@ -87,3 +91,47 @@ def check_arguments(argv):
         elif not opt:
             print "ojee"
     return path_to_pdb, path_output
+
+
+
+
+def pdb_map(files):
+    """
+    Constructs a Dictionary from PDBID to list of
+    all paths that belong to this PDBID
+
+    :param files:
+    :return:
+    """
+    res = defaultdict(list)
+
+    for file_path in files:
+        res[get_id(file_path)].append(file_path)
+
+    return res
+
+
+def get_pos(residue):
+    """
+    Return Position of Residue
+
+    :param residue: Residue object from BioPython.
+    :return: Position of Residue in AA Sequence
+    """
+    return residue.get_id()[1]
+
+
+def get_id(path):
+    """
+    Extract PDBIB from filepath
+
+
+    :param path: Path to PDB file
+    :return: PDBID
+    """
+
+    matches = re.findall(RE_PDBID, path)
+
+    # if we encounter a PDBID
+    if matches:
+        return matches[0].split('.')[0]

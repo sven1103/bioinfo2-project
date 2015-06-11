@@ -2,9 +2,6 @@
 Extract some required attributes from PDB files using
 the BioPython library.
 """
-import re
-
-from pdb.constants import RE_PDBID
 
 __author__ = 'fillinger'
 import math
@@ -14,6 +11,9 @@ from collections import defaultdict
 from Bio import BiopythonWarning, PDB
 
 import constants
+
+
+
 
 
 
@@ -94,8 +94,14 @@ def get_secondary_structure_annotation(path):
                 term_res = int(line[33:37])  # the terminating res. of a sheet
                 record_strand_aa += range(start_res, term_res, 1)
 
-                # extract strand type
-                sclass = int(line[38:40])
+                # extract strand type, assume 0 if we encounter somewhat
+                # invalid entry
+
+                try:
+                    sclass = int(line[38:40])
+                except ValueError:
+                    sclass = 0
+
                 current_sheet.append((start_res, term_res, sclass))
 
                 strand_counter += 1
@@ -220,19 +226,3 @@ if __name__ == "__main__":
     print "-----------------"
     for angles in res[1]:
         print angles[0], ":", angles[1]
-
-
-def get_id(path):
-    """
-    Extract PDBIB from filepath
-
-
-    :param path: Path to PDB file
-    :return: PDBID
-    """
-
-    matches = re.findall(RE_PDBID, path)
-
-    # if we encounter a PDBID
-    if matches:
-        return matches[0].split('.')[0]

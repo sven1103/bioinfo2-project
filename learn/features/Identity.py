@@ -10,8 +10,9 @@ class Identity(Feature):
 
     def __init__(self):
         super(Identity, self).__init__()
+        self.name = 'Identity'
 
-    def set_context(self, pdb_path):
+    def tell_context(self, pdb_path):
         pass
 
     def encode(self, entity):

@@ -1,13 +1,14 @@
+from __future__ import division
 from collections import defaultdict
 
 from Bio.PDB import PDBParser
 
-from pdb.extract import get_id
-from FeatureContext import FeatureContext
+import configuration.variables
 from learn.features.Identity import Identity
-from util import window
+from util import window, get_id
 from learn.target_encoding import TARGET_CODES
 from learn.WindowExtractor import WindowExtractor
+from learn.FeatureContext import FeatureContext
 import configuration as conf
 
 
@@ -84,14 +85,13 @@ def annotate(pdb_file):
     fc = FeatureContext([pdb_file])
 
     # get feature Matrix for Helices of PDB file
-
     XHelix, YHelix = fc.construct_matrix(conf.helix_features,
                                          conf.helix_assigner,
-                                         conf.helix_window_size)
+                                         configuration.variables.helix_window_size)
 
     XStrand, YStrand = fc.construct_matrix(conf.strand_features,
                                            conf.strand_assigner,
-                                           conf.strand_window_size)
+                                           configuration.variables.strand_window_size)
 
     # if we cannot extract features from this PDB file, return None
     if not XHelix:
@@ -104,15 +104,23 @@ def annotate(pdb_file):
     pred_helix = conf.helix_predictor.predict(XHelix)
     pred_helix = correct_helices(pred_helix)
 
-    # predict Sheet Positions
-    pred_sheet = conf.strand_predictor.predict(XStrand)
+    # predict Strand Positions
+    pred_strand = conf.strand_predictor.predict(XStrand)
 
-    # expand true and predicted helix annotations
-    pred_helix_expand = expand(struc, pred_helix, conf.helix_window_size)
-    pred_strand_expand = expand(struc, pred_sheet, conf.strand_window_size)
+    # expand true and predicted helix and strand annotations
+    pred_helix_expand = expand(struc, pred_helix,
+                               configuration.variables.helix_window_size)
+    pred_strand_expand = expand(struc, pred_strand,
+                                configuration.variables.strand_window_size)
 
-    true_helix_expand = expand(struc, YHelix, conf.helix_window_size)
-    true_strand_expand = expand(struc, YStrand, conf.strand_window_size)
+    # TODO Here we have to annotate Sheets correctly with their orientation
+    # first, get all encompassed Hydrogen bonds
+    #hydrogen_bonds = StrucExtractor(struc).get_hydrogen_bonds()
+
+    true_helix_expand = expand(struc, YHelix,
+                               configuration.variables.helix_window_size)
+    true_strand_expand = expand(struc, YStrand,
+                                configuration.variables.strand_window_size)
 
     # merge separate predictions of helices and sheets
     pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)
