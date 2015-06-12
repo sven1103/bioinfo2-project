@@ -1,5 +1,4 @@
 from __future__ import division
-from random import shuffle
 from math import floor
 
 from sklearn.metrics import accuracy_score
@@ -20,11 +19,7 @@ def train_test_split(xs, test=0.4):
     """
     n = len(xs)
     to = int(round(n * test))
-    shuffle(xs)
-    train = xs[0:to]
-    test = xs[to:n]
-
-    return train, test
+    return xs[0:to], xs[to:n]
 
 def cross_validate_split(xs, fold=4):
     """
@@ -46,7 +41,23 @@ def cross_validate_split(xs, fold=4):
     return splits
 
 
-def evaluate_annotator(folds):
+def eval_pdb(test_pdb):
+    """
+    Evaluates the PDB file given by its path when predictor is trained
+    on the training data
+
+    :param train:
+    :param test_pdb:
+    :return:
+    """
+    map_true, map_predict, true_sheets, predicted_sheets\
+        = base.annotate(test_pdb)
+
+    acc = accuracy_score(map_true.values(), map_predict.values())
+
+    return acc
+
+def cv_annotator(folds):
     """
     Evaluates annotation in a CV manner by training predictors on the
     test set and annotating all remaining PDB files with their
@@ -58,23 +69,28 @@ def evaluate_annotator(folds):
     # consider each fold of the CV
     for (train, test) in folds:
 
+        conf.reset_predictors()
+
         # Fit predictors on training data
         fc = FeatureContext(train)
         X_train, Y_train = fc.construct_matrix(conf.helix_features,
                                               conf.helix_assigner,
                                               conf.helix_window_size)
+
         conf.helix_predictor.fit(X_train, Y_train)
 
         X_train, Y_train = fc.construct_matrix(conf.strand_features,
                                                conf.strand_assigner,
-                                                conf.strand_window_size)
+                                               conf.strand_window_size)
+
         conf.strand_predictor.fit(X_train, Y_train)
 
         # evaluate all PDB files of the test set
         test_accs = []
 
         for test_pdb in test:
-            (map_true, map_predict) = base.annotate(test_pdb)
+            (map_true, map_predict, true_sheets, predicted_sheets) \
+                = base.annotate(test_pdb)
 
             # skip PDB file if we cannot annotate anything
             if map_true is None:
@@ -86,6 +102,7 @@ def evaluate_annotator(folds):
 
     return res
 
+train, test = train_test_split(conf.pdb_files, test=0.4)
 
-print evaluate_annotator(cross_validate_split(conf.pdb_files, fold=4))
 
+print eval_pdb(test[0])

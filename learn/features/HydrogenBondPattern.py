@@ -18,13 +18,14 @@ import configuration as conf
 
 class HydrogenBondPattern(Feature):
 
-    def __init__(self, min_seq_distance):
+    def __init__(self, min_seq_distance, mode='potential'):
         super(HydrogenBondPattern, self).__init__()
 
         self.name = 'HydrogenBondPattern'
 
         # Parameters of Hydrogen Bond Patterns
         self.min_seq_distance = min_seq_distance
+        self.mode = mode
 
         # Context of Hydrogen Bond Pattern
         self.pdb_path = None
@@ -181,7 +182,7 @@ class HydrogenBondPattern(Feature):
         elif hbc_path is not None:
             self._compute_plain_from_map()
 
-    def encode(self, entity):
+    def _encode_potential(self, entity):
         """
         Extracts Hydrogen Bond Pattern from List of AA `entity`
 
@@ -207,3 +208,31 @@ class HydrogenBondPattern(Feature):
                 res.extend([0, 0])
 
         return res
+
+    def _encode_pairs(self, entity):
+        """
+
+        :param entity:
+        :return:
+        """
+        res = []
+
+        positions = map(lambda x: x.get_id()[1],  entity)
+
+        # consider all possible combinations of w
+        for (left, right) in combinations(positions, 2):
+
+            # append if there is in fact an hb annotation for left, right
+            if (left, right) in self.potential_map:
+                res.append((left, right))
+        return res
+
+    def encode(self, entity):
+
+        if self.mode == 'potential':
+            return self._encode_potential(entity)
+
+        elif self.mode == 'pairs':
+            return self._encode_pairs(entity)
+        else:
+            raise ValueError("Unrecognized mode to encode Hydrogen Bonds.")

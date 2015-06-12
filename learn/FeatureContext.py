@@ -7,11 +7,6 @@ from util import get_id
 from learn.WindowExtractor import WindowExtractor
 
 
-# files with hydrogen bonds
-hb_dir = 'material/features/hydrogen_bonds'
-pdb_dir = '/home/lukas/Dropbox/BI2_project/material/training/'
-
-
 class FeatureContext(object):
     """
     Allows the construction of feature matrices by defining features
@@ -26,8 +21,6 @@ class FeatureContext(object):
             {pdb_file: get_secondary_structure_annotation(pdb_file)
              for pdb_file in pdb_files}
 
-        self.feature_context = {}
-
     def _update(self, pdb_path, features):
         """
         Sets all features into the new context of the PDB file.
@@ -36,8 +29,7 @@ class FeatureContext(object):
         :param features: List of features as defined by the "features" package
         """
         for feature in features:
-            self.feature_context[(pdb_path, feature.name)] =\
-                feature.tell_context(pdb_path)
+            feature.tell_context(pdb_path)
 
     def construct_matrix(self, features, annotator, window_size):
         """

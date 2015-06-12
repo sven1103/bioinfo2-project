@@ -5,11 +5,14 @@ from Bio.PDB import PDBParser
 
 import configuration.variables
 from learn.features.Identity import Identity
+from learn.sheets import predict_sheets
 from util import window, get_id
 from learn.target_encoding import TARGET_CODES
 from learn.WindowExtractor import WindowExtractor
 from learn.FeatureContext import FeatureContext
+from learn.features.HydrogenBondPattern import HydrogenBondPattern
 import configuration as conf
+from pdb.extract import get_amino_acids
 
 
 def correct_helices(Y):
@@ -61,7 +64,8 @@ def expand(struc, Y, window_size):
         for pos in positions:
 
             # if pos is still Coil, we assume class that we see
-            aa_map[pos] = Y[index]
+            if aa_map[pos] == TARGET_CODES['Coil']:
+                aa_map[pos] = Y[index]
 
     return aa_map
 
@@ -107,15 +111,25 @@ def annotate(pdb_file):
     # predict Strand Positions
     pred_strand = conf.strand_predictor.predict(XStrand)
 
-    # expand true and predicted helix and strand annotations
+    # expand predicted helix and strand annotations
     pred_helix_expand = expand(struc, pred_helix,
                                configuration.variables.helix_window_size)
     pred_strand_expand = expand(struc, pred_strand,
                                 configuration.variables.strand_window_size)
 
-    # TODO Here we have to annotate Sheets correctly with their orientation
     # first, get all encompassed Hydrogen bonds
-    #hydrogen_bonds = StrucExtractor(struc).get_hydrogen_bonds()
+
+    sheet_bonds = HydrogenBondPattern(2, mode='pairs')
+    sheet_bonds.tell_context(pdb_file)
+    hydrogen_bonds = sheet_bonds.encode(get_amino_acids(struc))
+
+    # get true annotations of sheets
+    true_sheets = fc.get_sheets()
+
+    predicted_strand_positions = [k for (k, v) in pred_strand_expand.iteritems()
+                        if v != TARGET_CODES['Coil']]
+
+    pred_sheets = predict_sheets(hydrogen_bonds, predicted_strand_positions)
 
     true_helix_expand = expand(struc, YHelix,
                                configuration.variables.helix_window_size)
@@ -126,5 +140,5 @@ def annotate(pdb_file):
     pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)
     true_expand = merge_prediction(true_helix_expand, true_strand_expand)
 
-    # return helix annotation, together with its accuracy
-    return (true_expand, pred_expand)
+    # return annotations and sheets
+    return (true_expand, pred_expand, true_sheets, pred_sheets)

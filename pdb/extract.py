@@ -17,6 +17,7 @@ import constants
 
 
 
+
 # remove the ugly warning from the PDB module that chains are discontinuous
 warnings.simplefilter("ignore", BiopythonWarning)
 
@@ -92,7 +93,7 @@ def get_secondary_structure_annotation(path):
                 # if line provides a SHEET information
                 start_res = int(line[22:26])  # the start residue of a sheet
                 term_res = int(line[33:37])  # the terminating res. of a sheet
-                record_strand_aa += range(start_res, term_res, 1)
+                record_strand_aa += range(start_res, term_res + 1)
 
                 # extract strand type, assume 0 if we encounter somewhat
                 # invalid entry
