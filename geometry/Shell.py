@@ -1,16 +1,26 @@
 """
 This file provides a class for a sphere in 3D, but only
-representing the outer shell
+representing the outer shell.
 
 """
 import numpy as np
 
-import Plane
+from Plane import Plane
 
 
 class Shell(object):
+    """
+    Represents Shell in 3D space, which is hollow.
+    """
 
     def __init__(self, center, radius):
+        """
+        Creates new instances of a Sphere in 3D space.
+
+        :param center: Coordinates (x, y, z) of the Sphere's center point.
+        :param radius: Radius of the new Shell instance.
+        :type radius: float
+        """
 
         self.center = np.array(center)
         self.radius = radius
@@ -18,7 +28,7 @@ class Shell(object):
     def element(self, theta, phi):
         """
         Returns vector that is element of this shell by specifying
-        angles theta and phi
+        angles theta and phi.
 
         :param theta: First angle of vector
         :param phi: Second angle of vector
@@ -36,21 +46,23 @@ class Shell(object):
 
     def intersect(self, other):
         """
-        Intersect this shell with a plane, yields function
-        which return 0 iff vector specified by theta and
-        phi lies on the plane
+        Intersect this shell with a plane (only this intersection mode is
+        supported so far), yields function which returns 0
+        iff vector specified by theta and phi lies on the plane
 
-        :param other:
-        :return:
+        :param other: Plane object to be intersected with.
+        :return: Function f that satisfies f(theta, phi) = 0 iff
+        vector specified by theta and phi lies on the intersection.
         """
 
-        if not isinstance(other, Plane.Plane):
-            raise AttributeError(("You cannot intersect a Shell with this"
-                                 "object."))
+        if not isinstance(other, Plane):
+            raise ValueError(("You cannot intersect a Shell with this"
+                              "object."))
 
         def equation(theta, phi):
 
-            # define all components of the equation
+            # define all components of the equation, this is a whole bunch
+            # of variables
             n1 = other.normal[0]
             n2 = other.normal[1]
             n3 = other.normal[2]
@@ -62,7 +74,7 @@ class Shell(object):
             p3 = other.strut[2]
             r = self.radius
 
-            # setup parts of the equation
+            # compute components of the equation
             a = (n1 * x0) - (p1 * n1) \
                 + (n2 * y0) - (p2 * n2) \
                 + (n3 * z0) - (p3 * n3)

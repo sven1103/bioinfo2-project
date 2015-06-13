@@ -1,8 +1,11 @@
+"""
+Represents a Plane in 3D space.
+"""
 from __future__ import division
 
 import numpy as np
 
-from algebra.Line import Line
+from Line import Line
 
 
 class Plane(object):
@@ -11,6 +14,12 @@ class Plane(object):
     """
 
     def __init__(self, strut, normal):
+        """
+        Instantiates Plane object in 3D space.
+
+        :param strut: Struc vector (x,y,z) of the Plane.
+        :param normal: Normal vector of the Plane.
+        """
 
         self.strut = np.array(strut)
         self.normal = np.array(normal)
@@ -19,6 +28,8 @@ class Plane(object):
 
     @property
     def coordinates(self):
+        """ Returns 4-tuple (a,b,c,d), where each point (x,y,z) of the
+        plane satisfies ax + by + cz + d = 0"""
 
         if self._coordinates is None:
 
@@ -29,9 +40,18 @@ class Plane(object):
         return self._coordinates
 
     def intersect(self, other):
+        """
+        Intersects this Plane with another Plane instance `other`.
+        The result will be either None, if the Planes do not intersect,
+        or a Line instance, which represents the intersection line of
+        the Planes
 
-        # compute direction of intersection line, which is the cross of
-        # the normal vectors
+        :param other: Plane instance this instance should be intersected with
+        :return: None if Planes do not intersect or Line instance of
+        intersection line"""
+
+        # compute direction of the intersection line, which is the cross
+        # product of the normal vectors
         new_dir = np.cross(self.normal, other.normal)
 
         # if the new_dir is zero, then the planes are parallel
@@ -66,5 +86,4 @@ def from_vec(vec1, vec2, vec3):
     b = np.array(vec2)
     c = np.array(vec3)
 
-    normal = np.cross(b - a, b - c)
-    return Plane(vec2, normal)
+    return Plane(vec2, np.cross(b - a, b - c))
