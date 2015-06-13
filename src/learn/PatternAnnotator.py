@@ -82,7 +82,6 @@ class PatternAnnotator(object):
         """
         Make the complete annotation
         """
-        print sheets
         all_residues = zip(*self.annotation)[0]
         annotation_pred = []
         for residue in all_residues:
@@ -93,10 +92,6 @@ class PatternAnnotator(object):
             else:
                 annotation_pred.append("C")
 
-        print all_residues
-        print annotation_pred
-
-
         refined_annotation = remove_gaps("".join(annotation_pred), 3)
 
         return zip(all_residues, refined_annotation)
@@ -105,10 +100,8 @@ class PatternAnnotator(object):
         annotation_real = "".join(zip(*self.annotation)[1])
         annotation_pred = "".join(zip(*self.annotation_prediction)[1])
 
-
         print annotation_pred
         print annotation_real
-
 
         counter_common_structure = 0
         counter = 0
@@ -143,31 +136,32 @@ def has_neighbor(res, list_annotations, type):
 def remove_gaps(string_annotation, window_size):
 
     counter = 0
-    window_list = []
+    window_list_old = []
+    window_list_refined = []
 
     while counter in range(0, len(string_annotation)):
+
         window_string = string_annotation[counter:counter+window_size]
-        if window_string is "SCS":
-            window_list.append(["SSS"])
-        elif window_string is "HCH":
-            window_list.append(["HHH"])
+
+        if window_string in "SCS":
+            window_list_old.append([window_string])
+            window_list_refined.append(["SSS"])
+        elif window_string in "HCH":
+            window_list_old.append([window_string])
+            window_list_refined.append(["HHH"])
         else:
-            window_list.append(window_string)
+            window_list_old.append([window_string])
+            window_list_refined.append([window_string])
         counter += 1
 
-    print window_list
-    refined_annotation = []
-    for window in window_list:
-        refined_annotation.append(window[0])
-
-    print "".join(refined_annotation)
-
-    return refined_annotation
-
-
-
-
-
+    refinement = []
+    for window in window_list_refined:
+        if not refinement:
+            refinement.append(window[0][0:2])
+        else:
+            refinement.append(window[0][1])
+    refinement = refinement[0:len(refinement)-1]
+    return refinement
 
 
 def group_helices(list_helix_residues):
@@ -252,8 +246,8 @@ def get_pdb_annotation(protein_structure, pdb_file):
 
 
 if __name__ == "__main__":
-    hb_file = "../training_data2/1q4k.hb"
-    pdb_path = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/1q4k.pdb"
+    hb_file = "../training_data2/1Z41.hb"
+    pdb_path = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/1Z41.pdb"
     hbond_pattern = PatternAnnotator(hb_file, pdb_path)
     #hbond_pattern.refine_structure_annotation()
-    hbond_pattern.accuracy_prediction()
+    print hbond_pattern.accuracy_prediction()
