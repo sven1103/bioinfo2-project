@@ -3,7 +3,7 @@ import re
 from itertools import combinations
 
 import pdb.constants as co
-from pdb.extract import get_id
+from util import get_id
 from Feature import Feature
 
 
@@ -34,9 +34,10 @@ def get_hydrogen_bond_pattern_file(hb_files):
 
         def __init__(self):
             super(HydrogenBondPatternFile, self).__init__()
+            self.name = 'HydrogenBondPatternFile'
             self.potential_map = None
 
-        def set_context(self, pdb_path):
+        def tell_context(self, pdb_path):
             self.potential_map = pdb_potentials[get_id(pdb_path)]
 
         def encode(self, entity):

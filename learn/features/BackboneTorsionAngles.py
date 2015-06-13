@@ -6,9 +6,7 @@ class BackboneTorsionAngles(Feature):
 
     def __init__(self):
         super(BackboneTorsionAngles, self).__init__()
-
-    def set_context(self, pdb_path):
-        pass
+        self.name = 'BackboneTorsionAngles'
 
     def encode(self, entity):
         res = []

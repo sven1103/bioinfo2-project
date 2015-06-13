@@ -28,8 +28,6 @@ class WindowExtractor(object):
         :param entity: Sequence of consecutive AAs
         :return: Encoding of the entity
         """
-
-        # TODO There should be a better, more pythonic way, to accomplish this
         encoding = []
         for feature in self.features:
             encoding.extend(feature.encode(entity))

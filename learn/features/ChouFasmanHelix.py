@@ -28,6 +28,7 @@ class ChouFasmanHelix(Feature):
 
     def __init__(self):
         super(ChouFasmanHelix, self).__init__()
+        self.name = 'ChouFasmanHelix'
 
     def encode(self, entity):
         """

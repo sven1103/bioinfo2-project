@@ -1,9 +1,11 @@
-__author__ = 'lukas'
+"""
+Used to assign classes for supervised learning to entities.
+"""
+from __future__ import division
 from target_encoding import TARGET_CODES
 
 
-
-class Annotator(object):
+class ClassAssigner(object):
 
     def __init__(self, classes):
 
@@ -13,17 +15,20 @@ class Annotator(object):
 
         y = 0
 
+        n = len(positions)
+        frm = int(round(n/3)) - 1
+        to = frm + 3
+
         # try to annotate a beta strand
-        if len(positions) == 4:
 
-            triplet_type = ''
+        triplet_type = ''
 
-            for pos in positions[1:4]:
+        for pos in positions[frm:to]:
 
-                if pos in sheet_aa:
-                    triplet_type += 's'
-                else:
-                    triplet_type += 'x'
+            if pos in sheet_aa:
+                triplet_type += 's'
+            else:
+                triplet_type += 'x'
 
             if triplet_type in TARGET_CODES:
                 y = TARGET_CODES[triplet_type]
