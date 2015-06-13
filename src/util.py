@@ -8,6 +8,7 @@ from collections import defaultdict
 import getopt
 import re
 import sys
+import os
 
 import numpy as np
 
@@ -53,7 +54,16 @@ def reformat_list(xs):
     """
     return [tuples for element in xs for tuples in element if element]
 
-def pdb_map(files):
+
+def absolute_file_paths(directory):
+
+    for dirpath, _, filenames in os.walk(directory):
+
+        for f in filenames:
+            yield os.path.abspath(os.path.join(dirpath, f))
+
+
+def pdb_map(directory):
     """
     Constructs a Dictionary from PDBID to list of
     all paths that belong to this PDBID.
@@ -63,8 +73,7 @@ def pdb_map(files):
     that belong to this PDBID.
     """
     res = defaultdict(list)
-
-    for file_path in files:
+    for file_path in absolute_file_paths(directory):
         res[get_id(file_path)].append(file_path)
 
     return res

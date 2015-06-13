@@ -12,6 +12,7 @@ from src.learn.FeatureContext import FeatureContext
 from src.learn.features.HydrogenBondPattern import HydrogenBondPattern
 from src.pdb.extract import get_amino_acids
 from src.conf import conf
+from feature_list import helix_features, strand_features
 
 def correct_helices(Y):
     """
@@ -37,6 +38,32 @@ def correct_helices(Y):
             Y[index + 1] = TARGET_CODES['Alpha-Helix']
 
     return Y
+
+def strand(Y):
+    """
+    Tries to correct the predictions of strands, which are obviously incorrect
+
+    :param Y: Vector of Strand types
+    :return: Corrected class vector Y
+    """
+
+    for (index, (left, middle, right)) in enumerate(window(Y, 3)):
+
+        # if the left frame is a coil and the right frame is also a coil,
+        # then we we assume that the middle frame will also be a coil
+        if left == TARGET_CODES['Coil'] and right == TARGET_CODES['Coil']:
+            Y[index + 1] = TARGET_CODES['Coil']
+
+        # if the left frame is a Alpha Helix and the right frame is a
+        # Alpha Helix, then we assume the the middle frame also belongs
+        # to a helix
+        elif left == TARGET_CODES['sss'] \
+                and right == TARGET_CODES['sss']:
+
+            Y[index + 1] = TARGET_CODES['sss']
+
+    return Y
+
 
 
 def expand(struc, Y, window_size):
@@ -76,7 +103,10 @@ def merge_prediction(map_helix, map_strands):
         res[pos] = map_strands[pos]
 
     for pos in map_helix:
-        res[pos] = map_helix[pos]
+
+        if map_helix[pos] != TARGET_CODES['Coil']:
+
+            res[pos] = map_helix[pos]
 
     return res
 
@@ -87,12 +117,12 @@ def annotate(pdb_file):
     fc = FeatureContext([pdb_file])
 
     # get feature Matrix for Helices of PDB file
-    XHelix, YHelix = fc.construct_window_matrix(conf.helix_features,
+    XHelix, YHelix = fc.construct_window_matrix(helix_features,
                                                 conf.helix_assigner,
                                                 conf.helix_window_size)
 
-    XStrand, YStrand = fc.construct_window_matrix(conf.strand_features,
-                                           conf.strand_assigner,
+    XStrand, YStrand = fc.construct_window_matrix(strand_features,
+                                                  conf.strand_assigner,
                                            conf.strand_window_size)
 
     # if we cannot extract features from this PDB file, return None
@@ -103,12 +133,12 @@ def annotate(pdb_file):
         struc = PDBParser().get_structure(get_id(pdb_file), f)
 
     # predict Helix position
-    helix_predictor = conf.get_helix_predictor()
+    helix_predictor = conf.helix_predictor
     pred_helix = helix_predictor.predict(XHelix)
     pred_helix = correct_helices(pred_helix)
 
     # predict Strand Positions
-    strand_predictor = conf.get_strand_predictor()
+    strand_predictor = conf.strand_predictor
     pred_strand = strand_predictor.predict(XStrand)
 
     # expand predicted helix and strand annotations
@@ -137,12 +167,11 @@ def annotate(pdb_file):
     true_strand_expand = expand(struc, YStrand,
                                 conf.strand_window_size)
 
-    print true_sheets
-    print pred_sheets
-
     # merge separate predictions of helices and sheets
     pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)
     true_expand = merge_prediction(true_helix_expand, true_strand_expand)
 
     # return annotations and sheets
+    print pred_expand
+
     return (true_expand, pred_expand, true_sheets, pred_sheets)

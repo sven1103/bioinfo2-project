@@ -3,6 +3,8 @@ from itertools import combinations
 import numpy as np
 
 from src.conf import conf
+from feature_list import sheet_features
+
 
 def sheet_encode(strand1, strand2, features, pdb_path):
     """
@@ -141,7 +143,7 @@ def join_strands(strands, hb_pairs, pdb_path):
 
                 # move elem[0] and strand to the feature space
                 X = sheet_encode(list(elem[0]), list(strand),
-                                 conf.sheet_features, pdb_path)
+                                 sheet_features, pdb_path)
 
                 strand_orientation = sheet_predictor.predict(X)
                 sheet.append((strand, strand_orientation[0]))

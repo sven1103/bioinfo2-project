@@ -120,7 +120,7 @@ class HydrogenBondPattern(WindowFeature, SheetFeature):
         pdbid = get_id(self.pdb_path)
 
         # write hydrogen bonds to the plain file
-        with open(conf.hb_dir + os.path.sep + pdbid + '.hb', 'w') as f:
+        with open(conf.temp_dir + os.path.sep + pdbid + '.hb', 'w') as f:
 
             for pos in self.potential_map:
                 a = str(pos[0])
@@ -145,7 +145,7 @@ class HydrogenBondPattern(WindowFeature, SheetFeature):
                                   for splt in (re.split(co.RE_WHITESPACE, line)
                                                for line in f)}
 
-        with open(conf.hb_dir + os.path.sep + pdbid + '.hbc', 'w') as f:
+        with open(conf.temp_dir + os.path.sep + pdbid + '.hbc', 'w') as f:
             cPickle.dump(self.potential_map, f)
 
 

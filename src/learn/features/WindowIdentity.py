@@ -2,7 +2,7 @@
 Does not really encode an entity but rather just returns
 the amino acids as entity.
 """
-from src.learn.features import WindowFeature
+from src.learn.features.WindowFeature import WindowFeature
 
 
 class WindowIdentity(WindowFeature):
