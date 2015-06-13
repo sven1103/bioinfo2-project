@@ -2,7 +2,7 @@ __author__ = 'fillinger'
 
 import target_encoding
 from Bio import PDB
-from pdb import extract as ex
+from src.pdb import extract as ex
 import difflib
 
 class PatternAnnotator(object):
@@ -104,6 +104,11 @@ class PatternAnnotator(object):
     def accuracy_prediction(self):
         annotation_real = "".join(zip(*self.annotation)[1])
         annotation_pred = "".join(zip(*self.annotation_prediction)[1])
+
+
+        print annotation_pred
+        print annotation_real
+
 
         counter_common_structure = 0
         counter = 0
@@ -251,4 +256,4 @@ if __name__ == "__main__":
     pdb_path = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/1q4k.pdb"
     hbond_pattern = PatternAnnotator(hb_file, pdb_path)
     #hbond_pattern.refine_structure_annotation()
-    print "Accuracy: " , hbond_pattern.accuracy_prediction()
+    hbond_pattern.accuracy_prediction()
