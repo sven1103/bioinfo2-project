@@ -30,30 +30,34 @@ def main(argv):
     fc = FeatureContext(pdb_files)
 
     # train Helix Predictor
+    sys.stdout.write('Started to fit the HELIX predictor.' + os.linesep)
     x_train, y_train = fc.construct_window_matrix(helix_features,
-                                                 conf.helix_assigner,
-                                                 conf.helix_window_size)
+                                                  conf.helix_assigner,
+                                                  conf.helix_window_size)
     conf.helix_predictor.fit(x_train, y_train)
 
     # train Strand Predictor
-    y_train, y_train = fc.construct_window_matrix(strand_features,
-                                                 conf.strand_assigner,
-                                                 conf.strand_window_size)
+    sys.stdout.write('Started to fit the STRAND predictor.' + os.linesep)
+    x_train, y_train = fc.construct_window_matrix(strand_features,
+                                                  conf.strand_assigner,
+                                                  conf.strand_window_size)
     conf.strand_predictor.fit(x_train, y_train)
 
     # train Sheet Predictor
+    sys.stdout.write('Started to fit the SHEET predictor.' + os.linesep)
     x_train, y_train = fc.construct_sheet_matrix(sheet_features)
-
     conf.sheet_predictor.fit(x_train, y_train)
 
-    with open(conf.pred_dir + os.path.sep + 'HELIX', 'w') as f:
-        cPickle.dump(conf.helix_predictor, f)
-    with open(conf.pred_dir + os.path.sep + 'HELIX', 'w') as f:
-        cPickle.dump(conf.helix_predictor, f)
-    with open(conf.pred_dir + os.path.sep + 'HELIX', 'w') as f:
-        cPickle.dump(conf.helix_predictor, f)
+    # create output directory for predictor if it does not exist
+    if not os.path.exists(conf.pred_dir):
+        os.makedirs(conf.pred_dir)
 
-
+    with open(conf.pred_dir + os.path.sep + 'HELIX', 'w') as f:
+        cPickle.dump(conf.helix_predictor, f)
+    with open(conf.pred_dir + os.path.sep + 'STRAND', 'w') as f:
+        cPickle.dump(conf.helix_predictor, f)
+    with open(conf.pred_dir + os.path.sep + 'SHEET', 'w') as f:
+        cPickle.dump(conf.helix_predictor, f)
 
 if __name__ == '__main__':
     main(sys.argv)

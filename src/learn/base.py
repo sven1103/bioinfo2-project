@@ -39,7 +39,7 @@ def correct_helices(Y):
 
     return Y
 
-def strand(Y):
+def correct_strand(Y):
     """
     Tries to correct the predictions of strands, which are obviously incorrect
 
@@ -123,7 +123,7 @@ def annotate(pdb_file):
 
     XStrand, YStrand = fc.construct_window_matrix(strand_features,
                                                   conf.strand_assigner,
-                                           conf.strand_window_size)
+                                                  conf.strand_window_size)
 
     # if we cannot extract features from this PDB file, return None
     if not XHelix:
@@ -171,7 +171,52 @@ def annotate(pdb_file):
     pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)
     true_expand = merge_prediction(true_helix_expand, true_strand_expand)
 
-    # return annotations and sheets
-    print pred_expand
+    return true_expand, pred_expand, true_sheets, pred_sheets
 
-    return (true_expand, pred_expand, true_sheets, pred_sheets)
+
+def annotate_no_sheet(pdb_file):
+
+    # get feature Matrix and true classes of PDB file
+    fc = FeatureContext([pdb_file])
+
+    # get feature Matrix for Helices of PDB file
+    XHelix, YHelix = fc.construct_window_matrix(helix_features,
+                                                conf.helix_assigner,
+                                                conf.helix_window_size)
+
+    XStrand, YStrand = fc.construct_window_matrix(strand_features,
+                                                  conf.strand_assigner,
+                                                  conf.strand_window_size)
+
+    # if we cannot extract features from this PDB file, return None
+    if not XHelix:
+        return None, None
+
+    with open(pdb_file, 'r') as f:
+        struc = PDBParser().get_structure(get_id(pdb_file), f)
+
+    # predict Helix position
+    helix_predictor = conf.helix_predictor
+    pred_helix = helix_predictor.predict(XHelix)
+    pred_helix = correct_helices(pred_helix)
+
+    # predict Strand Positions
+    strand_predictor = conf.strand_predictor
+    pred_strand = strand_predictor.predict(XStrand)
+
+    # expand predicted helix and strand annotations
+    pred_helix_expand = expand(struc, pred_helix,
+                               conf.helix_window_size)
+    pred_strand_expand = expand(struc, pred_strand,
+                                conf.strand_window_size)
+
+    true_helix_expand = expand(struc, YHelix,
+                               conf.helix_window_size)
+    true_strand_expand = expand(struc, YStrand,
+                                conf.strand_window_size)
+
+    # merge separate predictions of helices and sheets
+    pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)
+    true_expand = merge_prediction(true_helix_expand, true_strand_expand)
+
+    return true_expand, pred_expand

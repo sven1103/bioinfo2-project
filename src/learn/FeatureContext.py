@@ -8,6 +8,7 @@ from src.learn.WindowExtractor import WindowExtractor
 from sheets import sheet_encode
 from src.pdb.hydrogen import StructureHydrogenAdder
 
+
 class FeatureContext(object):
     """
     Allows the construction of feature matrices by defining features
@@ -49,7 +50,6 @@ class FeatureContext(object):
         Y = []
 
         for pdb in self.sec_struc:
-            print pdb
 
             # set all features to the the current PDB contest
             self._update(pdb, features)

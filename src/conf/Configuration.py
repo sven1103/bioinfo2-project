@@ -7,7 +7,7 @@ from src.util import pdb_map
 from src.learn.ClassAssigner import ClassAssigner
 from src.learn.target_encoding import TARGET_CODES
 from configuration import helix_predictor, strand_predictor, sheet_predicor,\
-    helix_window_size, strand_window_size, temp_dir, pred_dir
+    helix_window_size, strand_window_size, temp_dir, pred_dir, eval_dir
 
 
 class Configuration(object):
@@ -20,6 +20,7 @@ class Configuration(object):
         self.path = None
         self.temp_dir = None
         self.pred_dir = None
+        self.eval_dir = None
         self.hb_dict = None
 
         self.helix_assigner = ClassAssigner([TARGET_CODES['Coil'],
@@ -69,8 +70,6 @@ class Configuration(object):
         self.path = path
         self.temp_dir = path + os.path.sep + temp_dir
         self.pred_dir = path + os.path.sep + pred_dir
+        self.eval_dir = path + os.path.sep + eval_dir
         self.hb_dict = pdb_map(self.temp_dir)
-
-
-
 

@@ -7,6 +7,8 @@ import numpy as np
 from src.learn import base
 from learn.FeatureContext import FeatureContext
 from src.conf import conf
+from feature_list import helix_features, strand_features
+from src.learn.target_encoding import Q3_MAPPING
 
 
 def train_test_split(xs, test=0.4):
@@ -34,9 +36,9 @@ def cross_validate_split(xs, fold=4):
     split_size = int(floor(n / fold))
 
     # generate all CV splits of the list xs
-    splits =[(xs[0:i*split_size] + xs[i*split_size + split_size:n],
-              xs[i*split_size: i*split_size + split_size])
-             for i in range(0, fold)]
+    splits = [(xs[0:i*split_size] + xs[i*split_size + split_size:n],
+               xs[i*split_size: i*split_size + split_size])
+              for i in range(0, fold)]
 
     return splits
 
@@ -64,7 +66,6 @@ def cv_annotator(folds):
 
     :return: List of Accuracies
     """
-    res = []
     # consider each fold of the CV
     for (train, test) in folds:
 
@@ -72,36 +73,32 @@ def cv_annotator(folds):
 
         # Fit predictors on training data
         fc = FeatureContext(train)
-        X_train, Y_train = fc.construct_window_matrix(conf.helix_features,
+        x_train, y_train = fc.construct_window_matrix(helix_features,
                                                       conf.helix_assigner,
                                                       conf.helix_window_size)
 
-        conf.helix_predictor.fit(X_train, Y_train)
+        conf.helix_predictor.fit(x_train, y_train)
 
-        X_train, Y_train = fc.construct_window_matrix(conf.strand_features,
+        x_train, y_train = fc.construct_window_matrix(strand_features,
                                                       conf.strand_assigner,
                                                       conf.strand_window_size)
 
-        conf.strand_predictor.fit(X_train, Y_train)
+        conf.strand_predictor.fit(x_train, y_train)
 
-        # evaluate all PDB files of the test set
-        test_accs = []
-
+        acc = []
+        # take average score of test set
         for test_pdb in test:
-            (map_true, map_predict, true_sheets, predicted_sheets) \
-                = base.annotate(test_pdb)
+            map_true, map_predict = base.annotate_no_sheet(test_pdb)
 
             # skip PDB file if we cannot annotate anything
             if map_true is None:
                 continue
 
-            test_accs.append(accuracy_score(map_true.values(),
-                                            map_predict.values()))
-        res.append(np.mean(test_accs))
+            # map down to the Q3 score
+            true = map(lambda x: Q3_MAPPING[x], map_true.values())
+            predicted = map(lambda x: Q3_MAPPING[x], map_predict.values())
 
-    return res
 
-_, test = train_test_split(conf.pdb_files, test=0.4)
+            acc.append(accuracy_score(true, predicted))
 
-print eval_pdb(test[0])
-
+        yield np.mean(acc)

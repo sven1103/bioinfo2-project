@@ -10,7 +10,7 @@ from Bio.PDB import Atom
 import numpy as np
 from scipy.optimize import fmin_slsqp
 
-import src.pdb.constants
+from src.pdb.constants import NH_DISTANCE, NH_DISTANCE2, HNCA_ANGLE_DEG
 from src.util import window, angle
 import extract
 from src.geometry import Plane
@@ -124,7 +124,7 @@ class StructureHydrogenAdder(object):
             p0 = np.power(b0, 2) + np.power(b1, 2) + np.power(b2, 2)
             p1 = (-1) * (2 * t[0] * b0 + 2 * t[1] * b1 + 2 * t[2] * b2)
             p2 = np.power(t[0], 2) + np.power(t[1], 2) + np.power(t[2], 2)\
-                - src.pdb.constants.NH_DISTANCE2
+                - NH_DISTANCE2
 
             roots = np.roots((p0, p1, p2))
 
@@ -152,7 +152,7 @@ class StructureHydrogenAdder(object):
 
         # ensures the correct distance between nitrogen and hydrogen
         def has_distance(x, y, z):
-            return np.linalg.norm(vec1(x, y, z)) - src.pdb.constants.NH_DISTANCE
+            return np.linalg.norm(vec1(x, y, z)) - NH_DISTANCE
 
         # consider vectors from nitrogen to hydrogen and vector
         # from calpha to nitrogen
@@ -163,7 +163,7 @@ class StructureHydrogenAdder(object):
         def target(x, y, z):
 
             return np.power(angle(vec1(x, y, z), vec2, deg=True)
-                            - src.pdb.constants.HNCA_ANGLE_DEG, 2)
+                            - HNCA_ANGLE_DEG, 2)
 
         res = fmin_slsqp(lambda q: target(q[0], q[1], q[2]),
                          x0=hydrogen,

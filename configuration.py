@@ -13,3 +13,4 @@ helix_window_size = 5
 strand_window_size = 3
 temp_dir = 'temp'
 pred_dir = 'predictors'
+eval_dir = 'evaluation'
