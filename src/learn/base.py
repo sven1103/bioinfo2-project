@@ -140,6 +140,7 @@ def annotate(pdb_file):
     # predict Strand Positions
     strand_predictor = conf.strand_predictor
     pred_strand = strand_predictor.predict(XStrand)
+    pred_strand = correct_strand(pred_strand)
 
     # expand predicted helix and strand annotations
     pred_helix_expand = expand(struc, pred_helix,
@@ -154,7 +155,7 @@ def annotate(pdb_file):
     hydrogen_bonds = sheet_bonds.encode(get_amino_acids(struc))
 
     # get true annotations of sheets
-    true_sheets = fc.get_sheets()
+    true_sheets = fc.get_sheets()[pdb_file]
 
     predicted_strand_positions = [k for (k, v) in pred_strand_expand.iteritems()
                         if v != TARGET_CODES['Coil']]
@@ -166,6 +167,12 @@ def annotate(pdb_file):
                                conf.helix_window_size)
     true_strand_expand = expand(struc, YStrand,
                                 conf.strand_window_size)
+
+    true_strand_positions = [k for (k, v) in true_strand_expand.iteritems()
+                        if v != TARGET_CODES['Coil']]
+
+    print true_strand_positions
+    print predicted_strand_positions
 
     # merge separate predictions of helices and sheets
     pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)

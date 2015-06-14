@@ -41,13 +41,13 @@ def predict_sheets(hb_pairs, strand_positions, pdb_path):
             continue
 
         # skip this hydrogen bond, if it does not connect sheets
-        if a not in strand_positions and b not in strand_positions:
+        if a not in strand_positions or b not in strand_positions:
             continue
 
-        left_a = a - 1
-        right_a = a + 1
-        left_b = b - 1
-        right_b = b + 1
+        left_a = a
+        right_a = a
+        left_b = b
+        right_b = b
 
         # try to extend the sheets as most as possible
         while True:
