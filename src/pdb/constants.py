@@ -23,7 +23,7 @@ RE_PDBID = r'[1-9][0-9a-zA-Z]{3}'
 
 
 # Matches file that contains hydrogen bond data
-RE_HB = r'.*\.hb'
+RE_HB = r'.*\.hb$'
 
 # Matches PDB files
 RE_PDB = r'.*\.pdb'

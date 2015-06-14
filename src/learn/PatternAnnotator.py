@@ -100,9 +100,8 @@ class PatternAnnotator(object):
         annotation_real = "".join(zip(*self.annotation)[1])
         annotation_pred = "".join(zip(*self.annotation_prediction)[1])
 
-        print annotation_pred
         print annotation_real
-
+        print annotation_pred
         counter_common_structure = 0
         counter = 0
 
@@ -246,8 +245,8 @@ def get_pdb_annotation(protein_structure, pdb_file):
 
 
 if __name__ == "__main__":
-    hb_file = "../training_data2/1Z41.hb"
-    pdb_path = "/home/fillinger/git/bioinformatics2/assignment_2/pdb/1Z41.pdb"
+    hb_file = "../../training_data/hb_files/1LND.hb"
+    pdb_path = "../../training_data/pdb_files/1LND.pdb"
     hbond_pattern = PatternAnnotator(hb_file, pdb_path)
     #hbond_pattern.refine_structure_annotation()
     print hbond_pattern.accuracy_prediction()
