@@ -96,8 +96,11 @@ def expand(struc, Y, window_size):
 
 
 def merge_prediction(map_helix, map_strands):
+    """
+    Merges Predictions of Helices and Strands to a single annotation
+    """
 
-    res = defaultdict(int)
+    res = defaultdict(lambda: TARGET_CODES['Coil'])
 
     for pos in map_strands:
         res[pos] = map_strands[pos]
@@ -210,6 +213,7 @@ def annotate_no_sheet(pdb_file):
     # predict Strand Positions
     strand_predictor = conf.strand_predictor
     pred_strand = strand_predictor.predict(XStrand)
+    pred_strand = correct_strand(pred_strand)
 
     # expand predicted helix and strand annotations
     pred_helix_expand = expand(struc, pred_helix,

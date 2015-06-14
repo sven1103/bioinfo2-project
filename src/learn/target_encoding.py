@@ -16,5 +16,14 @@ TARGET_CODES = {'Coil': 0,
 Q3_MAPPING = {0: '-', 1: 'H', 2: 'H', 3: 'H',
               4: 'E', 5: 'E', 6: 'E'}
 
+
+HELIX_MAPPING = {0: '-', 1: 'H', 2: 'H', 3: 'H',
+                 4: '-', 5: '-', 6: '-'}
+
+
+STRAND_MAPPING = {0: '-', 1: '-', 2: '-', 3: '-',
+                  4: 'E', 5: 'E', 6: 'E'}
+
+
 TYPE_MAPPING = {0: 'Coil', 1: 'ALPHA', 2: 'PI', 3: '310',
                 4: 'STRAND', 5: 'STRAND', 6: 'STRAND'}

@@ -38,6 +38,7 @@ class HydrogenBondPattern(WindowFeature, SheetFeature):
         :param entity: Iterable yielding Amino Acids
         :return: Generator of all Hydrogen Bonds found in `entity`
         """
+
         for (aa1, aa2) in combinations(entity, 2):
 
             # do not consider this pair if the number of atoms of the

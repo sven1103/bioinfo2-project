@@ -5,7 +5,6 @@ ML predictor.
 import sys
 import argparse
 import os
-import cPickle
 
 from src.util import absolute_file_paths
 from src.evaluation import cross_validate_split, cv_annotator
@@ -18,7 +17,7 @@ def main(args):
     parser.add_argument('MODE', type=str, default='CV')
     parser.add_argument('PDB_FILES', type=str)
     parser.add_argument('-f', '--fold', type=int)
-    parser.add_argument('-r', type=str, default='hs')
+    parser.add_argument('-m', type=str, default='Q3')
 
     args = parser.parse_args(args[1:])
 
@@ -42,12 +41,13 @@ def main(args):
 
     accs = []
 
-    # compue all folds
-    for acc in cv_annotator(folds):
+    # compute all folds
+    for acc in cv_annotator(folds, mode=args.m):
         accs.append(acc)
 
-    with open(conf.eval_dir + os.path.sep + 'ACC', 'w') as f:
-        cPickle.dump(accs, f)
+    with open(conf.eval_dir + os.path.sep + 'accuracies', 'w') as f:
+        for acc in accs:
+            f.write(str(acc) + os.linesep)
 
 if __name__ == '__main__':
     main(sys.argv)

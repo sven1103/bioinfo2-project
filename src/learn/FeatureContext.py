@@ -6,7 +6,6 @@ from src.pdb.extract import get_secondary_structure_annotation
 from src.util import get_id, window
 from src.learn.WindowExtractor import WindowExtractor
 from sheets import sheet_encode
-from src.pdb.hydrogen import StructureHydrogenAdder
 
 
 class FeatureContext(object):
@@ -57,12 +56,13 @@ class FeatureContext(object):
             # set up Window Extractor for current PDB file
             with open(pdb, 'r') as f:
 
+                print pdb
                 struc = PDBParser().get_structure(get_id(pdb), f)
 
                 # ensure that the current structure contains Hydrogens
-                sha = StructureHydrogenAdder(struc)
-                sha.supplement()
-                struc = sha.struc
+                #sha = StructureHydrogenAdder(struc)
+                #sha.supplement()
+                #struc = sha.struc
 
                 helix_aa, strand_aa, _ = self.sec_struc[pdb]
                 we = WindowExtractor(struc, window_size, features)

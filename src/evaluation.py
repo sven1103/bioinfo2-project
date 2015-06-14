@@ -8,7 +8,7 @@ from src.learn import base
 from learn.FeatureContext import FeatureContext
 from src.conf import conf
 from feature_list import helix_features, strand_features
-from src.learn.target_encoding import Q3_MAPPING
+from src.learn.target_encoding import Q3_MAPPING, HELIX_MAPPING, STRAND_MAPPING
 
 
 def train_test_split(xs, test=0.4):
@@ -58,7 +58,7 @@ def eval_pdb(test_pdb):
 
     return acc
 
-def cv_annotator(folds):
+def cv_annotator(folds, mode='Q3'):
     """
     Evaluates annotation in a CV manner by training predictors on the
     test set and annotating all remaining PDB files with their
@@ -73,21 +73,36 @@ def cv_annotator(folds):
 
         # Fit predictors on training data
         fc = FeatureContext(train)
+
+        if mode == 'Q3':
+            mapping = Q3_MAPPING
+        elif mode == 'H':
+            mapping = HELIX_MAPPING
+        elif mode == 'E':
+            mapping = STRAND_MAPPING
+
+        print "Start training helices"
         x_train, y_train = fc.construct_window_matrix(helix_features,
                                                       conf.helix_assigner,
                                                       conf.helix_window_size)
 
         conf.helix_predictor.fit(x_train, y_train)
 
+        print "Start training Strands"
         x_train, y_train = fc.construct_window_matrix(strand_features,
                                                       conf.strand_assigner,
                                                       conf.strand_window_size)
 
         conf.strand_predictor.fit(x_train, y_train)
+        print "Finished Training"
 
         acc = []
+        sov = []
         # take average score of test set
         for test_pdb in test:
+
+            print "Test", test_pdb
+
             map_true, map_predict = base.annotate_no_sheet(test_pdb)
 
             # skip PDB file if we cannot annotate anything
@@ -95,10 +110,9 @@ def cv_annotator(folds):
                 continue
 
             # map down to the Q3 score
-            true = map(lambda x: Q3_MAPPING[x], map_true.values())
-            predicted = map(lambda x: Q3_MAPPING[x], map_predict.values())
+            map_true = map(lambda x: mapping[x], map_true.values())
+            map_predict = map(lambda x: mapping[x], map_predict.values())
 
-
-            acc.append(accuracy_score(true, predicted))
+            acc.append(accuracy_score(map_true, map_predict))
 
         yield np.mean(acc)

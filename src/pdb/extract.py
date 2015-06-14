@@ -10,8 +10,10 @@ from collections import defaultdict
 
 from Bio import BiopythonWarning, PDB
 
+from src.pdb.hydrogen import validate
 from src.util import get_pos
 from src.pdb import constants
+
 
 
 
@@ -172,6 +174,11 @@ def get_backbone_torsion_angles(generator_aa):
 
         # get position of residue and map it to the annotated torsion angle
         pos = get_pos(residue)
+
+        # validate all amino acidss
+        if not validate(previous_residue) or not validate(curr_residue)\
+                or not validate(next_residue):
+            continue
 
         torsion_angles[pos] = compute_torsion_angles(previous_residue,
                                                      curr_residue,
