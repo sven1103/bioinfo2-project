@@ -46,10 +46,21 @@ def evaluate_accuracy(pdb_dir, hb_dir):
         except IndexError:
             print "IndexError in file ", hb_files[index]
             pass
-        print "Accuracy: ", list_accuracies[len(list_accuracies)-1]
+        print "Accuracy [Q3, Helix, Sheet]: ", list_accuracies[len(list_accuracies)-1]
         index += 1
 
     print list_accuracies
+
+    # write output
+    output = open("pattern_accuracies.tsv", "w")
+    output.write("Q3-score" + "\t" +
+                 "Helix-accuracy" + "\t"
+                 + "Sheet-accuracy\n")
+    for protein in list_accuracies:
+        output.write(str(protein[0]) + "\t"
+                     + str(protein[1]) + "\t"
+                     + str(protein[2]) + "\n")
+    output.close()
 
 
 if __name__ == "__main__":

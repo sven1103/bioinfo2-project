@@ -100,17 +100,35 @@ class PatternAnnotator(object):
         annotation_real = "".join(zip(*self.annotation)[1])
         annotation_pred = "".join(zip(*self.annotation_prediction)[1])
 
-        print annotation_real
-        print annotation_pred
+        print "Annotation PDB:\t\t", annotation_real
+        print "Annotation pred:\t", annotation_pred
         counter_common_structure = 0
         counter = 0
+        counter_common_sheet = 0
+        counter_common_helix = 0
 
         for res in annotation_real:
             if annotation_pred[counter] is res:
                 counter_common_structure += 1
+                if res is "H" and annotation_pred[counter] is "H":
+                    counter_common_helix += 1
+                if res is "S" and annotation_pred[counter] is "S":
+                    counter_common_sheet += 1
             counter += 1
 
-        return float(counter_common_structure)/len(annotation_real)
+        acc_q3 = float(counter_common_structure)/len(annotation_real)
+        try:
+            acc_helix = float(counter_common_helix)/annotation_real.count('H')
+        except ZeroDivisionError:
+            acc_helix = "NA"
+            pass
+        try:
+            acc_sheet = float(counter_common_sheet)/annotation_real.count('S')
+        except ZeroDivisionError:
+            acc_sheet = "NA"
+            pass
+
+        return [acc_q3, acc_helix, acc_sheet]
 
 
 def has_neighbor(res, list_annotations, type):
@@ -189,6 +207,7 @@ def group_helices(list_helix_residues):
 
 
 def group_sheets(list_sheet_residues):
+
     list_sheets = set([])
     sheet_object = []
     final_list = []
@@ -198,7 +217,9 @@ def group_sheets(list_sheet_residues):
                 list_sheets.add(res)
                 list_sheets.add(compare_res)
                 break
-
+    # print "----"
+    found_prefix = False
+    # print "hhhhhh"
     for res in sorted(list_sheets):
         if not sheet_object:
             sheet_object.append(res)
@@ -206,9 +227,19 @@ def group_sheets(list_sheet_residues):
             if res[0][0] == sheet_object[len(sheet_object)-1][0][0] + 2:
                 sheet_object.append(res)
             else:
-                final_list.append(sheet_object)
-                sheet_object = []
-                sheet_object.append(res)
+                found_prefix = False
+                for sheet_objects in final_list:
+                    if sheet_objects[len(sheet_objects)-1][0][0] + 2 == res[0][0]:
+                        if sheet_objects[len(sheet_objects)-1][0][1] + 2 == res[0][1] or\
+                                sheet_objects[len(sheet_objects)-1][0][1] - 2 == res[0][1]:
+                            final_list[final_list.index(sheet_objects)].append(res)
+                            found_prefix = True
+                if not found_prefix:
+                    final_list.append(sheet_object)
+                    sheet_object = []
+                    sheet_object.append(res)
+
+    final_list.append(sheet_object)
 
     final = set([])
     for line in final_list:
@@ -245,8 +276,8 @@ def get_pdb_annotation(protein_structure, pdb_file):
 
 
 if __name__ == "__main__":
-    hb_file = "../../training_data/hb_files/1LND.hb"
-    pdb_path = "../../training_data/pdb_files/1LND.pdb"
+    hb_file = "../training_data/hb_files/3F8C.hb"
+    pdb_path = "../training_data/pdb_files/3F8C.pdb"
     hbond_pattern = PatternAnnotator(hb_file, pdb_path)
     #hbond_pattern.refine_structure_annotation()
     print hbond_pattern.accuracy_prediction()

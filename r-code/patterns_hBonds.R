@@ -1,5 +1,5 @@
 
-hbonds <- read.table("1q4k.hb", sep=" ")
+hbonds <- read.table("1q48.hb", sep=" ")
 
 filteredBonds <- hbonds[hbonds$V3 < -1 | hbonds$V4 < -1,]
 
