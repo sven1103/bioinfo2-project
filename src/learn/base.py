@@ -171,12 +171,6 @@ def annotate(pdb_file):
     true_strand_expand = expand(struc, YStrand,
                                 conf.strand_window_size)
 
-    true_strand_positions = [k for (k, v) in true_strand_expand.iteritems()
-                        if v != TARGET_CODES['Coil']]
-
-    print true_strand_positions
-    print predicted_strand_positions
-
     # merge separate predictions of helices and sheets
     pred_expand = merge_prediction(pred_helix_expand, pred_strand_expand)
     true_expand = merge_prediction(true_helix_expand, true_strand_expand)

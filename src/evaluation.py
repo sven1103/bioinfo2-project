@@ -11,6 +11,89 @@ from feature_list import helix_features, strand_features
 from src.learn.target_encoding import Q3_MAPPING, HELIX_MAPPING, STRAND_MAPPING
 
 
+# extract segments:
+# extract segments:
+def get_segments(positions, segment_symbol):
+
+    segments = []
+
+    in_segment = False
+
+    for (index, symbol) in enumerate(positions):
+
+        if symbol == segment_symbol and not in_segment:
+            in_segment = True
+            left = index
+        elif symbol != segment_symbol and in_segment:
+            in_segment = False
+            right = index - 1
+            segments.append((left, right))
+
+    if in_segment:
+        right = len(positions) - 1
+        segments.append((left, right))
+
+    return segments
+
+
+def minov(seg1, seg2):
+
+    return len(set(range(seg1[0], seg1[1] + 1)) &
+               set(range(seg2[0], seg2[1] + 1)))
+
+
+def maxov(seg1, seg2):
+
+    return len(set(range(seg1[0], seg1[1] + 1)) |
+               set(range(seg2[0], seg2[1] + 1)))
+
+def seglen(seg):
+
+    return seg[1] - seg[0] + 1
+
+
+def delta(seg1, seg2):
+
+    return min([maxov(seg1, seg2) - minov(seg1, seg2),
+               minov(seg1,seg2),
+               seglen(seg1) / 2,
+               seglen(seg2) / 2])
+
+
+def overlap(seg1, seg2):
+
+    return minov(seg1, seg2) != 0
+
+
+def generate_overlapping(segments1, segments2):
+
+    for (seg1, seg2) in ((c, d)
+                         for c in segments1
+                         for d in segments2):
+
+        if overlap(seg1, seg2):
+            yield seg1, seg2
+
+
+
+
+def segment_overlap(positions1, positions2, types):
+
+    segments1_list = [get_segments(positions1, segment_symbol=t)
+                      for t in types]
+    segments2_list = [get_segments(positions2, segment_symbol=t)
+                      for t in types]
+
+    n = sum((sum(map(seglen, segments)) for segments in segments1_list))
+
+    return (1/n) * sum((sum((((minov(seg1, seg2) + delta(seg1, seg2)) /
+                              (maxov(seg1, seg2))) * seglen(seg1)
+                             for (seg1, seg2) in generate_overlapping(segments1,
+                                                                      segments2)))
+                        for (segments1, segments2) in zip(segments1_list,
+                                                          segments2_list)))
+
+
 def train_test_split(xs, test=0.4):
     """
     Splits the list `xs` into training and test data.
@@ -76,32 +159,33 @@ def cv_annotator(folds, mode='Q3'):
 
         if mode == 'Q3':
             mapping = Q3_MAPPING
+            symbols = ['H', 'E', '-']
+
         elif mode == 'H':
             mapping = HELIX_MAPPING
+            symbols = ['H', '-']
+
         elif mode == 'E':
             mapping = STRAND_MAPPING
+            symbols = ['E', '-']
 
-        print "Start training helices"
         x_train, y_train = fc.construct_window_matrix(helix_features,
                                                       conf.helix_assigner,
                                                       conf.helix_window_size)
 
         conf.helix_predictor.fit(x_train, y_train)
 
-        print "Start training Strands"
         x_train, y_train = fc.construct_window_matrix(strand_features,
                                                       conf.strand_assigner,
                                                       conf.strand_window_size)
 
         conf.strand_predictor.fit(x_train, y_train)
-        print "Finished Training"
 
         acc = []
         sov = []
+
         # take average score of test set
         for test_pdb in test:
-
-            print "Test", test_pdb
 
             map_true, map_predict = base.annotate_no_sheet(test_pdb)
 
@@ -114,5 +198,6 @@ def cv_annotator(folds, mode='Q3'):
             map_predict = map(lambda x: mapping[x], map_predict.values())
 
             acc.append(accuracy_score(map_true, map_predict))
+            sov.append(segment_overlap(map_true, map_predict, symbols))
 
-        yield np.mean(acc)
+        yield np.mean(acc), np.mean(sov),

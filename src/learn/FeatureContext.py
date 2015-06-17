@@ -56,7 +56,6 @@ class FeatureContext(object):
             # set up Window Extractor for current PDB file
             with open(pdb, 'r') as f:
 
-                print pdb
                 struc = PDBParser().get_structure(get_id(pdb), f)
 
                 # ensure that the current structure contains Hydrogens
