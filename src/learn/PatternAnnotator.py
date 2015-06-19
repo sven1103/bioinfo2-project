@@ -6,16 +6,51 @@ from src.pdb import extract as ex
 import difflib
 
 class PatternAnnotator(object):
+    """
+    This class expects a pdb-file and a file containing its computed
+    hydrogen bonds (below a set energy threshold, i.e. -0.5kcal/mol).
+    It extracts the secondary structure annotation from the pdb-file and
+    tries to predict an annotation from the hydrogen bond file. Both
+    annotations can then be compared and the accuracy computed.
+
+    In principle the annotation prediction has 5 steps so far:
+
+        1.) Estimation of secondary structure type by hydrogen bond residue
+        distance
+
+        2.) Grouping of residues in helices and sheets
+
+        3.) Forming concatenated structure objects within the helices and
+        sheets group (search for logical sequence patterns)
+
+        4.) Make the preliminary annotation
+
+        5.) Refine the annotation by removing gaps in annotated structures
+    """
 
     def __init__(self, hb_file, pdb_file):
+        # Read the hydrogen bond files (*.hb)
         self.hb_file = open(hb_file, "r").read().splitlines()
+
+        # Get the protein structure from the pdb-file
         self.protein = PDB.PDBParser().get_structure("protein", pdb_file)
+
+        # safe the file name
         self.pdb_file = pdb_file
+
+        # find and assign structure types (preliminary estimation)
         self.structure_patterns = self.find_patterns()
+
+        # get the annotation from the pdb-file
         self.annotation = get_pdb_annotation(self.protein, self.pdb_file)
+
+        # make own structure prediction by refining the annotation
         self.annotation_prediction = self.refine_structure_annotation()
 
     def find_patterns(self):
+        """
+        Extract all the hbond pairs and preliminary estimate the structure type
+        """
         list_annotation = []
         list_pairs = []
         for row in self.hb_file:
@@ -26,6 +61,13 @@ class PatternAnnotator(object):
         return zip(list_pairs, list_annotation)
 
     def estimate_structure_type(self, hb_pair):
+        """
+        Receives an hydrogen bond pair and estimates the structure type
+        from the residue distance.
+        For i+3 we predict 310-helices, for i+4 alpha-helices and for
+        i+5 pi-helices (rare). For patterns found with residue distances
+        greater 5 we suggest beta sheet structures.
+        """
         distance = abs(hb_pair[0] - hb_pair[1])
 
         if distance == 3:
@@ -41,7 +83,11 @@ class PatternAnnotator(object):
         return type
 
     def refine_structure_annotation(self):
-
+        """
+        From the preliminary structure estimation we calculate groups
+        of concatenated helix and sheet structure elements. This will be
+        further refined then.
+        """
         list_structure_part = []
         helix_object = []
         strand_object = []
@@ -65,7 +111,9 @@ class PatternAnnotator(object):
         refined_list_sheets = []
 
         """
-        Now eliminate residues from the annotation
+        Now eliminate residues from the annotation.
+        We don't want single annotations without neighboring structure
+        elements.
         """
         for line in list_structure_part:
             for elem in line:
@@ -76,6 +124,9 @@ class PatternAnnotator(object):
                     if has_neighbor(elem, list_structure_part, elem[1]):
                         refined_list_helices.append(elem)
 
+        """
+        Group the residues if they are consecutive.
+        """
         helices = group_helices(refined_list_helices)
         sheets = group_sheets(refined_list_sheets)
 
@@ -92,11 +143,20 @@ class PatternAnnotator(object):
             else:
                 annotation_pred.append("C")
 
+        """
+        Remove gaps in secondary structure annotation (it is unlikely,
+        that a helix has one single residue in itself that is not part of a
+        helix, same for sheets.
+        """
         refined_annotation = remove_gaps("".join(annotation_pred), 3)
 
         return zip(all_residues, refined_annotation)
 
     def accuracy_prediction(self):
+        """
+        Calculates the accuracy for the predicted structures.
+        :return:
+        """
         annotation_real = "".join(zip(*self.annotation)[1])
         annotation_pred = "".join(zip(*self.annotation_prediction)[1])
 
@@ -132,6 +192,14 @@ class PatternAnnotator(object):
 
 
 def has_neighbor(res, list_annotations, type):
+    """
+    Checks if residue has neighboring residues that are part of the same
+    structure type.
+    :param res:
+    :param list_annotations:
+    :param type:
+    :return:
+    """
 
     if str(type) in "123":
         for line in list_annotations:
@@ -151,6 +219,12 @@ def has_neighbor(res, list_annotations, type):
 
 
 def remove_gaps(string_annotation, window_size):
+    """
+    Remove gaps by sliding over the annotation and refine the sequence.
+    :param string_annotation:
+    :param window_size:
+    :return:
+    """
 
     counter = 0
     window_list_old = []
@@ -182,6 +256,11 @@ def remove_gaps(string_annotation, window_size):
 
 
 def group_helices(list_helix_residues):
+    """
+    Groups helices residues together, if they are consecutive.
+    :param list_helix_residues:
+    :return:
+    """
     list_helices = []
     helix_object = []
 
@@ -207,6 +286,11 @@ def group_helices(list_helix_residues):
 
 
 def group_sheets(list_sheet_residues):
+    """
+    Groups residues in sheets together, if they are consecutive
+    :param list_sheet_residues:
+    :return:
+    """
 
     list_sheets = set([])
     sheet_object = []
@@ -251,6 +335,12 @@ def group_sheets(list_sheet_residues):
 
 
 def get_pdb_annotation(protein_structure, pdb_file):
+    """
+    Extract the annotation from the pdb-file
+    :param protein_structure:
+    :param pdb_file:
+    :return:
+    """
     positions_helices, position_sheets, _ = ex.get_secondary_structure_annotation(pdb_file)
 
     all_aa = ex.get_amino_acids(protein_structure)
@@ -276,6 +366,9 @@ def get_pdb_annotation(protein_structure, pdb_file):
 
 
 if __name__ == "__main__":
+    """
+    Test the shit
+    """
     hb_file = "../training_data/hb_files/3F8C.hb"
     pdb_path = "../training_data/pdb_files/3F8C.pdb"
     hbond_pattern = PatternAnnotator(hb_file, pdb_path)
